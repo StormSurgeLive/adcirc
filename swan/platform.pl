@@ -56,7 +56,7 @@ elsif ($os =~ /AIX/i) {
   print OUTFILE "F90_SER = xlf90_r\n";
   print OUTFILE "F90_OMP = xlf90_r\n";
   print OUTFILE "F90_MPI = mpxlf90_r\n";
-  print OUTFILE "FLAGS_OPT = -O3 -qstrict -qarch=auto -qtune=auto -qnohot -qcache=auto \\\n";
+  print OUTFILE "FLAGS_OPT = -O2 -qstrict -qarch=auto -qtune=auto -qnohot -qcache=auto \\\n";
   print OUTFILE "            -qunroll -qalign=4k -qfloat=hsflt\n";
   print OUTFILE "FLAGS_MSC = -w -qfixed -qnosave -q64\n";
   print OUTFILE "FLAGS90_MSC = -w -qfree=f90 -qnosave -q64\n";
@@ -491,7 +491,7 @@ elsif ($os =~ /Linux/i) {
     print OUTFILE "F90_SER = xlf90\n";
     print OUTFILE "F90_OMP =\n";
     print OUTFILE "F90_MPI = mpfort\n";
-    print OUTFILE "FLAGS_OPT = -O3 -qstrict -qarch=auto -qtune=auto\n";
+    print OUTFILE "FLAGS_OPT = -O2 -qstrict -qarch=auto -qtune=auto\n";
     print OUTFILE "FLAGS_MSC = -qfixed -qzerosize -qwarn64\n";
     print OUTFILE "FLAGS90_MSC = -qfree=f90 -qzerosize -qwarn64\n";
     print OUTFILE "FLAGS_DYN =\n";
@@ -636,7 +636,7 @@ elsif ($os =~ /Darwin/i) {
   print OUTFILE "F90_SER = xlf90\n";
   print OUTFILE "F90_OMP =\n";
   print OUTFILE "F90_MPI =\n";
-  print OUTFILE "FLAGS_OPT = -O3 -qstrict -qtune=auto -qcache=auto -qalign=4k\n";
+  print OUTFILE "FLAGS_OPT = -O2 -qstrict -qtune=auto -qcache=auto -qalign=4k\n";
   print OUTFILE "FLAGS_MSC = -w -qfixed\n";
   print OUTFILE "FLAGS90_MSC = -w -qfree=f90\n";
   print OUTFILE "FLAGS_DYN =\n";
