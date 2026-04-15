@@ -2,17 +2,17 @@
 !
 ! ADCIRC - The ADvanced CIRCulation model
 ! Copyright (C) 1994-2023 R.A. Luettich, Jr., J.J. Westerink
-! 
+!
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
-! 
+!
 ! This program is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU General Public License for more details.
-! 
+!
 ! You should have received a copy of the GNU Lesser General Public License
 ! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !
@@ -67,10 +67,10 @@
      &
       USE NETCDF        ! enables the fortran 90 interface to netcdf
       IMPLICIT NONE
- 
+
       REAL(8), PARAMETER ::  doubleval=-99999.d0
       INTEGER, PARAMETER :: intFillValue=-99999
- 
+
       TYPE, PRIVATE :: meshStructure
          LOGICAL :: initialized = .false.
          INTEGER :: X_id          ! x-coordinate or longitude
@@ -328,8 +328,8 @@ C        2D simulation state
          type(nodalData) :: ch1
          type(nodalData) :: nodecodenc
          type(nodalData) :: noffnc
-C--   
-         type(nodalData) :: htot1, htot2 
+C--
+         type(nodalData) :: htot1, htot2
          LOGICAL:: have_htot1, have_htot2
 
 C        3D simulation state
@@ -4107,8 +4107,8 @@ C-----------------------------------------------------------------------
       USE MESH, ONLY : X, Y, SLAM, SFEA, ICS, NM,
      &  SLAM0, SFEA0
       USE BOUNDARIES, ONLY : NBOU, NVEL, NOPE, NBVV, NVDLL, NBDV, NVELL,
-     &  NETA, IBTYPEE, IBTYPE, IBCONNR, barlanhtr, barinhtr, barincfspr, 
-     &  barlancfspr, barincfsbr, pipehtr, pipecoefr, pipediamr 
+     &  NETA, IBTYPEE, IBTYPE, IBCONNR, barlanhtr, barinhtr, barincfspr,
+     &  barlancfspr, barincfsbr, pipehtr, pipecoefr, pipediamr
       IMPLICIT NONE
       type(meshStructure), intent(inout) :: myMesh
       INTEGER :: i, j, k, kj  ! array indices
@@ -4144,7 +4144,7 @@ C
       ALLOCATE(myMesh%pipediam(myMesh%nvelnc))
       ALLOCATE(myMesh%pipeht(myMesh%nvelnc))
       ALLOCATE(myMesh%nmnc(NE_G,myMesh%nface_len))
- 
+
 !     Store nodal coordinates
       if (ics.eq.1) then
          myMesh%xnc = X
@@ -5538,7 +5538,7 @@ C     H 1 : total water depth at the previous time step
       iret = nf90_put_att(hs%ncid, hs%htot1%nodal_data_id,
      &         '_FillValue', doubleval)
       CALL check_err(iret)
-     
+
 C
 C     H 2 : total water depth at the current time step
       hs%htot2%nodal_data_dims(1) = hs%myMesh%num_nodes_dim_id
@@ -7032,13 +7032,14 @@ C-----------------------------------------------------------------------
       SUBROUTINE writeNetCDFHotstart(lun, Elev1Descript,
      &        Elev2Descript, VelDescript, CH1Descript, EtaDiscDescript,
      &        NodeCodeDescript, NOFFDescript, H1_HS_Descript,
-     &        H2_HS_Descript, timesec, it )
+     &        H2_HS_Descript, ElevStaDescript, VelStaDescript,
+     &        ConcStaDescript, WindVelStaDescript, ElevDescript,
+     &        ConcDescript, WindVelDescript, timesec, it )
+
       USE SIZES, ONLY : globaldir, mnproc
       USE GLOBAL, ONLY : OutputDataDescript_t,
-     &                   im, iestp, nscoue, ivstp, imhs,
-     &                   nscouv, icstp, nscouc, ipstp, iwstp, nscoum,
-     &                   igep, nscouge, igvp, nscougv, igcp, nscougc,
-     &                   igpp, igwp, nscougw
+     &                   im, iestp, ivstp, imhs, icstp, ipstp, iwstp,
+     &                   igep, igvp, igcp, igpp, igwp
       IMPLICIT NONE
 C
       INTEGER, intent(in) :: lun
@@ -7052,6 +7053,15 @@ C
 
       type(OutputDataDescript_t), intent(in) :: H1_HS_Descript
       type(OutputDataDescript_t), intent(in) :: H2_HS_Descript
+      ! the following are only needed for the correct output
+      ! spool counters
+      type(OutputDataDescript_t), intent(in) :: ElevStaDescript    ! NSCOUE
+      type(OutputDataDescript_t), intent(in) :: VelStaDescript     ! NSCOUV
+      type(OutputDataDescript_t), intent(in) :: ConcStaDescript    ! NSCOUC
+      type(OutputDataDescript_t), intent(in) :: WindVelStaDescript ! NSCOUM
+      type(OutputDataDescript_t), intent(in) :: ElevDescript       ! NSCOUGE
+      type(OutputDataDescript_t), intent(in) :: ConcDescript       ! NSCOUGC
+      type(OutputDataDescript_t), intent(in) :: WindVelDescript    ! NSCOUGW
 
       REAL(8), intent(in) :: timesec
       INTEGER, intent(in) :: it   ! current ADCIRC time step
@@ -7133,16 +7143,16 @@ C     Get the NetCDF IDs of the relevant variables from the file
       iret=nf90_inq_varid(hs%ncid,"noff",hs%noffnc%nodal_data_id)
       CALL check_err(iret)
 
-      hs%have_htot1 = .true. ;    
+      hs%have_htot1 = .true. ;
       iret=nf90_inq_varid(hs%ncid,"h1",hs%htot1%nodal_data_id)
       if ( iret /= NF90_NOERR ) hs%have_htot1 = .false. ;
       ! CALL check_err(iret)
 
-      hs%have_htot2 = .true. ;  
+      hs%have_htot2 = .true. ;
       iret=nf90_inq_varid(hs%ncid,"h2",hs%htot2%nodal_data_id)
       if ( iret /= NF90_NOERR ) hs%have_htot2 = .false. ;
       ! CALL check_err(iret)
- 
+
 C
 C     Write the nodal data to the netcdf file
       IF (MNPROC.eq.1) THEN
@@ -7165,7 +7175,7 @@ C     Write the nodal data to the netcdf file
      &      NodeCodeDescript%iarray, start, kount)
          CALL check_err(iret)
 
-         !------ H1, H2 
+         !------ H1, H2
          if ( hs%have_htot2 ) then
            iret = nf90_put_var(hs%ncid, hs%htot2%nodal_data_id,
      &        H2_HS_Descript%array, start, kount)
@@ -7202,14 +7212,14 @@ C     Write the nodal data to the netcdf file
      &      NodeCodeDescript%iarray_g, start, kount)
          CALL check_err(iret)
 
-         ! H1, H2 
-         if ( hs%have_htot2 ) then  
+         ! H1, H2
+         if ( hs%have_htot2 ) then
            iret = nf90_put_var(hs%ncid, hs%htot2%nodal_data_id,
      &       H2_HS_Descript%array_g, start, kount)
            CALL check_err(iret)
          endif
 
-         if ( hs%have_htot1 ) then 
+         if ( hs%have_htot1 ) then
            iret = nf90_put_var(hs%ncid, hs%htot1%nodal_data_id,
      &       H1_HS_Descript%array_g, start, kount)
            CALL check_err(iret)
@@ -7239,7 +7249,7 @@ C     going on to the next one.
       CALL check_err(iret)
       iret = nf90_inq_varid(hs%ncid,"nscoue",tempid)
       CALL check_err(iret)
-      iret = nf90_put_var(hs%ncid, tempid, nscoue)
+      iret = nf90_put_var(hs%ncid, tempid, ElevStaDescript%spoolCounterHot)
       CALL check_err(iret)
       iret = nf90_inq_varid(hs%ncid,"ivstp",tempid)
       CALL check_err(iret)
@@ -7247,7 +7257,7 @@ C     going on to the next one.
       CALL check_err(iret)
       iret = nf90_inq_varid(hs%ncid,"nscouv",tempid)
       CALL check_err(iret)
-      iret = nf90_put_var(hs%ncid, tempid, nscouv)
+      iret = nf90_put_var(hs%ncid, tempid, VelStaDescript%spoolCounterHot)
       CALL check_err(iret)
       IF ((IM.EQ.10).OR.(IMHS.EQ.10)) THEN
          iret = nf90_inq_varid(hs%ncid,"icstp",tempid)
@@ -7256,7 +7266,7 @@ C     going on to the next one.
          CALL check_err(iret)
          iret = nf90_inq_varid(hs%ncid,"nscouc",tempid)
          CALL check_err(iret)
-         iret = nf90_put_var(hs%ncid, tempid, nscouc)
+         iret = nf90_put_var(hs%ncid, tempid, ConcStaDescript%spoolCounterHot)
          CALL check_err(iret)
       ENDIF
       iret = nf90_inq_varid(hs%ncid,"ipstp",tempid)
@@ -7269,7 +7279,7 @@ C     going on to the next one.
       CALL check_err(iret)
       iret = nf90_inq_varid(hs%ncid,"nscoum",tempid)
       CALL check_err(iret)
-      iret = nf90_put_var(hs%ncid, tempid, nscoum)
+      iret = nf90_put_var(hs%ncid, tempid, WindVelStaDescript%spoolCounterHot)
       CALL check_err(iret)
       iret = nf90_inq_varid(hs%ncid,"igep",tempid)
       CALL check_err(iret)
@@ -7277,7 +7287,7 @@ C     going on to the next one.
       CALL check_err(iret)
       iret = nf90_inq_varid(hs%ncid,"nscouge",tempid)
       CALL check_err(iret)
-      iret = nf90_put_var(hs%ncid, tempid, nscouge)
+      iret = nf90_put_var(hs%ncid, tempid, ElevDescript%spoolCounterHot)
       CALL check_err(iret)
       iret = nf90_inq_varid(hs%ncid,"igvp",tempid)
       CALL check_err(iret)
@@ -7285,7 +7295,7 @@ C     going on to the next one.
       CALL check_err(iret)
       iret = nf90_inq_varid(hs%ncid,"nscougv",tempid)
       CALL check_err(iret)
-      iret = nf90_put_var(hs%ncid, tempid, nscougv)
+      iret = nf90_put_var(hs%ncid, tempid, VelDescript%spoolCounterHot)
       CALL check_err(iret)
       IF ((IM.EQ.10).OR.(IMHS.EQ.10)) THEN
          iret = nf90_inq_varid(hs%ncid,"igcp",tempid)
@@ -7294,7 +7304,7 @@ C     going on to the next one.
          CALL check_err(iret)
          iret = nf90_inq_varid(hs%ncid,"nscougc",tempid)
          CALL check_err(iret)
-         iret = nf90_put_var(hs%ncid, tempid, nscougc)
+         iret = nf90_put_var(hs%ncid, tempid, ConcDescript%spoolCounterHot)
          CALL check_err(iret)
       ENDIF
       iret = nf90_inq_varid(hs%ncid,"igpp",tempid)
@@ -7307,7 +7317,7 @@ C     going on to the next one.
       CALL check_err(iret)
       iret = nf90_inq_varid(hs%ncid,"nscougw",tempid)
       CALL check_err(iret)
-      iret = nf90_put_var(hs%ncid, tempid, nscougw)
+      iret = nf90_put_var(hs%ncid, tempid, WindVelDescript%spoolCounterHot)
       CALL check_err(iret)
 C
 C     now close the netcdf file
@@ -8143,7 +8153,7 @@ C-----------------------------------------------------------------------
      &                   IM, NP_G, NE_G, NODES_LG, IMAP_EL_LG,
      &                   htot1 => H1, htot2 => H2,
      &                   IFNLFA
-      USE MESH, ONLY: DP 
+      USE MESH, ONLY: DP
 #ifdef CMPI
       USE MESSENGER, ONLY : MSG_FINI
 #endif
@@ -8248,21 +8258,21 @@ C
       CALL check_err(iret)
 
       !  hot start file contain the varible h1 and h2
-      hs%have_htot1 = .true. 
-      iret=nf90_inq_varid(hs%ncid, "h1", hs%htot1%nodal_data_id) 
+      hs%have_htot1 = .true.
+      iret=nf90_inq_varid(hs%ncid, "h1", hs%htot1%nodal_data_id)
       if ( iret /= NF90_NOERR ) hs%have_htot1 = .false. ;
       if ( .not. hs%have_htot1 ) then
-              WRITE(16,'(A)') " Warning: the hot start file does not 
+              WRITE(16,'(A)') " Warning: the hot start file does not
      &   contain the h1 variable. Proceed with h1 = dp + ifnlfa*eta1"
-      endif        
+      endif
 
-      hs%have_htot2 = .true.            
+      hs%have_htot2 = .true.
       iret=nf90_inq_varid(hs%ncid, "h2", hs%htot2%nodal_data_id)
       if ( iret /= NF90_NOERR ) hs%have_htot2 = .false. ;
       if ( .not. hs%have_htot2 ) then
-              WRITE(16,'(A)') " Warning: the hot start file does not  
+              WRITE(16,'(A)') " Warning: the hot start file does not
      &   contain the h2 variable. Proceed with h2 = dp + ifnlfa*eta2" ;
-      endif        
+      endif
 
 
       ! serial
@@ -8292,7 +8302,7 @@ C        NodeCode
          CALL check_err(iret)
 
          ! hot start file contain the varible h1 and h2
-         ! H 2 
+         ! H 2
          if ( hs%have_htot2 ) then
              CALL check_err(  nf90_get_var(hs%ncid, hs%htot2%nodal_data_id,
      &                   htot2, start, kount ) )
@@ -8310,7 +8320,7 @@ C        NOFF
          iret = nf90_get_var(hs%ncid, hs%noffnc%nodal_data_id,
      &       noff, start, kount)
          CALL check_err(iret)
-  
+
 
       ELSE       ! parallel
 C
@@ -8336,7 +8346,7 @@ C
          if ( hs%have_htot2 ) then
            call mapFullDomainToSubdomain(hs%ncid, hs%myMesh%num_nodes,
      &        hs%htot2%nodal_data_id, subdomain_reals=htot2)
-         end if  
+         end if
 
          ! H 1
          if ( hs%have_htot1 ) then
@@ -8351,8 +8361,8 @@ C
       ENDIF
 
       ! Use DP reading in from read_input()
-      IF ( .not. hs%have_htot2 ) htot2 = DP + IFNLFA*eta2  
-      IF ( .not. hs%have_htot1 ) htot1 = DP + IFNLFA*eta1 
+      IF ( .not. hs%have_htot2 ) htot2 = DP + IFNLFA*eta2
+      IF ( .not. hs%have_htot1 ) htot1 = DP + IFNLFA*eta1
 
 C
 C     Read in model parameters to ADCIRC variables
@@ -8473,7 +8483,7 @@ C-----------------------------------------------------------------------
       use global, only : OutputDataDescript_t, allMessage, logMessage, nfover,np_g
 #ifdef CMPI
       use messenger, only: mapToSubdomainRealMPI,mapToSubdomainIntMPI,msg_lbcast
-#endif      
+#endif
       implicit none
       type(OutputDataDescript_t), intent(inout) :: descript
       real(8), intent(in) :: timeloc ! adcirc time in seconds since cold start
@@ -8531,111 +8541,108 @@ C-----------------------------------------------------------------------
       case default
          call allMessage(ERROR,'Files of the type "'
      &  //trim(descript % file_name)//'.nc" cannot be read by ADCIRC.')
+
+         no_early_return = .false.
+         call communicateMapToSubdomainMaxMinNetcdfStatus(no_early_return)
 #if defined(NETCDF_TRACE) || defined(ALL_TRACE)
          call allMessage(DEBUG,"Return.")
 #endif
-         no_early_return = .false.
-         call communicateMapToSubdomainMaxMinNetcdfStatus(no_early_return)
          call unsetMessageSource()
          RETURN ! RETURN RETURN
       end select
 
 
-      if(myproc.eq.0)then
-        dat%myFile%filename = trim(descript % file_name)//'.nc'
-        call logMessage(INFO,'Opening file "'
+      if (myproc.eq.0) then
+         dat%myFile%filename = trim(descript % file_name)//'.nc'
+         call logMessage(INFO,'Opening file "'
      &                 //trim(dat%myFile%filename)//'" for reading.')
- 
-!       Open fulldomain file
-        inquire(file=dat%myfile%filename,exist=dat%myfile%filefound)
-        if (dat%myFile%fileFound.eqv..false.) then
-           call allMessage(INFO,'The file "'//trim(dat%myFile%FILENAME)//
-     &         '" was not found.')
-#if defined(NETCDF_TRACE) || defined(ALL_TRACE)
-           call allMessage(DEBUG,"Return.")
-#endif  
-           no_early_return = .false.
-           call communicateMapToSubdomainMaxMinNetcdfStatus(no_early_return)
-           call unsetMessageSource()
-           RETURN ! RETURN RETURN
-        else
-           ! the file was found, let's open it
-           iret = nf90_open(dat%myFile%FILENAME, NF90_NOWRITE, dat%ncid)
-           call check_err(iret)
-        endif
- 
-!       nodes and elements
-        dat%myMesh => adcircMesh
 
-!       Inquire variables
-        call getDimensions(dat%ncid, dat%myTime, dat%myMesh, dat%myFile)
-        !
-        ! jgf52.08.21: If the netcdf min/max file contains no time records,
-        ! it was just created by adcprep, and there are no data to load.
-        if ( dat%myFile%record_counter.eq.0 ) then
-           call allMessage(INFO,'The file '//trim(dat%myFile%filename)//
+!        Open fulldomain file
+         inquire(file=dat%myfile%filename,exist=dat%myfile%filefound)
+         if (dat%myFile%fileFound.eqv..false.) then
+            call allMessage(INFO,'The file "'//trim(dat%myFile%FILENAME)//
+     &         '" was not found.')
+            no_early_return = .false.
+            call communicateMapToSubdomainMaxMinNetcdfStatus(no_early_return)
+#if defined(NETCDF_TRACE) || defined(ALL_TRACE)
+            call allMessage(DEBUG,"Return.")
+#endif
+            call unsetMessageSource()
+            RETURN ! RETURN RETURN
+         else
+            ! the file was found, let's open it
+            iret = nf90_open(dat%myFile%FILENAME, NF90_NOWRITE, dat%ncid)
+            call check_err(iret)
+         endif
+
+!        nodes and elements
+         dat%myMesh => adcircMesh
+
+!        Inquire variables
+         call getDimensions(dat%ncid, dat%myTime, dat%myMesh, dat%myFile)
+         !
+         ! jgf52.08.21: If the netcdf min/max file contains no time records,
+         ! it was just created by adcprep, and there are no data to load.
+         if ( dat%myFile%record_counter.eq.0 ) then
+            call allMessage(INFO,'The file '//trim(dat%myFile%filename)//
      &        'contains no data, '//
      &        'so the min/max record will be started anew.')
+            !
+            ! now close the netcdf file
+            iret = nf90_close(dat%ncid)
+            CALL check_err(iret)
+            no_early_return = .false.
+            call communicateMapToSubdomainMaxMinNetcdfStatus(no_early_return)
 #if defined(NETCDF_TRACE) || defined(ALL_TRACE)
-           call allMessage(DEBUG,"Return.")
-#endif  
-           call unsetMessageSource()
-           !
-           ! now close the netcdf file
-           iret = nf90_close(dat%ncid)
-           CALL check_err(iret)
-           no_early_return = .false.
-           call communicateMapToSubdomainMaxMinNetcdfStatus(no_early_return)
-           return ! EARLY RETURN
-        else
-           write(scratchMessage,3333) trim(descript % file_name)
-3333      format('Values from ',(a),
+            call allMessage(DEBUG,"Return.")
+#endif
+            call unsetMessageSource()
+            return ! EARLY RETURN
+         else
+            write(scratchMessage,3333) trim(descript % file_name)
+3333        format('Values from ',(a),
      &         ' will be reflected from the solution prior to this hotstart.')
-           call allMessage(INFO,scratchMessage)
-        endif
-        IF (dat%myTime%initialized.eqv..false.) THEN
-           ALLOCATE(dat%myTime%timenc(dat%myTime%timenc_len))
-           dat%myTime%initialized = .true.
-        ENDIF
-        !
-        ! jgf52.08.20: Read time and reject min/max data that correspond
-        ! to a future time. This can happen when an analyst hotstarts a run,
-        ! allows it to complete, then makes some adjustments to the input and
-        ! then tries to re-run it while forgetting to remove or replace the
-        ! min/max file from the previous attempt.
-        !
-        ! It is hard to imagine a scenario where someone would want to keep
-        ! the min/max record from the previous attempt under these circumstances.
-        ! As a result, I am logging it as an error but allowing the run to
-        ! continue if non-fatal override is enabled, since it would be
-        ! annoying to have ADCIRC bomb out every time the analyst mistakenly
-        ! leaves a min/max file in place.
-        iret=nf90_inq_varid(dat%ncid, "time", dat%myTime%timenc_id)
-        CALL check_err(iret)
-        starti(1)=1  ! min/max files have one element in the time array
-        counti(1)=1
-        iret = nf90_get_var(dat%ncid, dat%myTime%timenc_id,
+            call allMessage(INFO,scratchMessage)
+         endif
+         IF (dat%myTime%initialized.eqv..false.) THEN
+            ALLOCATE(dat%myTime%timenc(dat%myTime%timenc_len))
+            dat%myTime%initialized = .true.
+         ENDIF
+         !
+         ! jgf52.08.20: Read time and reject min/max data that correspond
+         ! to a future time. This can happen when an analyst hotstarts a run,
+         ! allows it to complete, then makes some adjustments to the input and
+         ! then tries to re-run it while forgetting to remove or replace the
+         ! min/max file from the previous attempt.
+         !
+         ! It is hard to imagine a scenario where someone would want to keep
+         ! the min/max record from the previous attempt under these circumstances.
+         ! As a result, I am logging it as an error but allowing the run to
+         ! continue if non-fatal override is enabled, since it would be
+         ! annoying to have ADCIRC bomb out every time the analyst mistakenly
+         ! leaves a min/max file in place.
+         iret=nf90_inq_varid(dat%ncid, "time", dat%myTime%timenc_id)
+         CALL check_err(iret)
+         starti(1)=1  ! min/max files have one element in the time array
+         counti(1)=1
+         iret = nf90_get_var(dat%ncid, dat%myTime%timenc_id,
      &      dat%myTime%timenc, starti, counti)
-        CALL check_err(iret)
-        if (  dat%myTime%timenc(1) .gt. timeloc ) then
-           call allMessage(ERROR,'Max/min file '//trim(dat%myFile%filename)//
+         CALL check_err(iret)
+         if (  dat%myTime%timenc(1) .gt. timeloc ) then
+            call allMessage(ERROR,'Max/min file '//trim(dat%myFile%filename)//
      &       ' contains data written after the hotstart time. '//
-     &     ' It may have been produced using different input parameters, '//
+     &       ' It may have been produced using different input parameters, '//
      &       'perhaps during a previously attempted hot start run. '//
      &       ' Its values will not be read.')
-           if (nfover.eq.0) then
-              call allMessage(ERROR,
+            if (nfover.eq.0) then
+               call allMessage(ERROR,
      &         'Execution terminated due to invalid '//
      &          trim(dat%myFile%filename)//' file.')
                call netcdfTerminate()
-           else
-              call allMessage(INFO,'The record for '//
+            else
+               call allMessage(INFO,'The record for '//
      &          trim(dat%myFile%filename)//
      &          ' will be started anew and exection will continue.')
-#if defined(NETCDF_TRACE) || defined(ALL_TRACE)
-               call allMessage(DEBUG,"Return.")
-#endif  
-               call unsetMessageSource()
                !
                ! now close the netcdf file
                iret = nf90_close(dat%ncid)
@@ -8643,46 +8650,55 @@ C-----------------------------------------------------------------------
 
                no_early_return = .false.
                call communicateMapToSubdomainMaxMinNetcdfStatus(no_early_return)
+#if defined(NETCDF_TRACE) || defined(ALL_TRACE)
+               call allMessage(DEBUG,"Return.")
+#endif
+               call unsetMessageSource()
                return ! EARLY RETURN
-           endif
-        endif
-        
-        dat%myFile%record_counter = 1
-        kount(1)=dat%myMesh%num_nodes
-        kount(2)=dat%myTime%timenc_len
-        start(1)=1
-        start(2)=dat%myFile%record_counter
-        !
-        ! get array variable ids
-        !call logMessage(DEBUG,'netcdf var is '//trim(vn))
-        iret=nf90_inq_varid(dat%ncid,trim(vn),dat%max_nodal_data_id)
-        CALL check_err(iret)
-        timestampsFound = .true.
-        iret=nf90_inq_varid(dat%ncid,trim(tvn),dat%time_max_nodal_data_id)
-        if ( iret.ne.NF90_NOERR ) then
-           call logMessage(INFO,'The file "'//trim(dat%myFile%filename)//
-     &    '" does not contain time of occurrence for the min/max data. '//
-     &    'As a result, time of occurrence will be initialized to -99999.')
-           timestampsFound = .false.
-        endif
+            endif
+         endif
+
+         dat%myFile%record_counter = 1
+         kount(1)=dat%myMesh%num_nodes
+         kount(2)=dat%myTime%timenc_len
+         start(1)=1
+         start(2)=dat%myFile%record_counter
+         !
+         ! get array variable ids
+         !call logMessage(DEBUG,'netcdf var is '//trim(vn))
+         iret=nf90_inq_varid(dat%ncid,trim(vn),dat%max_nodal_data_id)
+         CALL check_err(iret)
+         timestampsFound = .true.
+         iret=nf90_inq_varid(dat%ncid,trim(tvn),dat%time_max_nodal_data_id)
+         if ( iret.ne.NF90_NOERR ) then
+            call logMessage(INFO,'The file "'//trim(dat%myFile%filename)//
+     &        '" does not contain time of occurrence for the min/max data. '//
+     &        'As a result, time of occurrence will be initialized to -99999.')
+            timestampsFound = .false.
+         endif
 
 #ifdef CMPI
-        if(mnproc.gt.1)then
+         if (mnproc.gt.1) then
             no_early_return = .true.
             call communicateMapToSubdomainMaxMinNetcdfStatus(no_early_return)
             ldmy(1) = timestampsFound
             call msg_lbcast(ldmy,1)
-        endif
-#endif        
+         endif
+#endif
       else
-#ifdef CMPI          
-        no_early_return = .false.
-        call communicateMapToSubdomainMaxMinNetcdfStatus(no_early_return)
-        if(.not.no_early_return)return
-
-        call msg_lbcast(ldmy,1)
-        timestampsFound = ldmy(1)
-#endif        
+#ifdef CMPI
+         no_early_return = .false.
+         call communicateMapToSubdomainMaxMinNetcdfStatus(no_early_return)
+         if (.not.no_early_return) then
+#if defined(NETCDF_TRACE) || defined(ALL_TRACE)
+            call allMessage(DEBUG,"Return.")
+#endif
+            call unsetMessageSource()
+            return
+         endif
+         call msg_lbcast(ldmy,1)
+         timestampsFound = ldmy(1)
+#endif
       endif
 
       ! serial
@@ -8705,9 +8721,9 @@ C-----------------------------------------------------------------------
      &             descript % array2, start, kount)
             call check_err(iret)
          endif
- 
+
       else       ! parallel
-#ifdef CMPI 
+#ifdef CMPI
          ! Create the fulldomain node and element index lists for this subdomain
          ! if it has not already happened for the reading of the netcdf
          ! hotstart file.
@@ -8757,7 +8773,7 @@ C-----------------------------------------------------------------------
             call mapToSubdomainRealMPI(np_g,np,tmp1,descript%imap,tmp0)
             descript%array2(:) = tmp1(:)
          endif
-#endif         
+#endif
       endif
 
       if(myproc.eq.0)then
@@ -8782,15 +8798,15 @@ C-----------------------------------------------------------------------
 !-----------------------------------------------------------------------
 #ifdef CMPI
           use messenger,only: msg_lbcast
-#endif          
+#endif
           implicit none
           logical,intent(inout) :: communicateStatus
           logical :: tmp(1)
-#ifdef CMPI          
+#ifdef CMPI
           tmp(1) = communicateStatus
           call msg_lbcast(tmp,1)
           communicateStatus = tmp(1)
-#endif          
+#endif
 !-----------------------------------------------------------------------
       end subroutine communicateMapToSubdomainMaxMinNetcdfStatus
 !-----------------------------------------------------------------------
@@ -9971,7 +9987,7 @@ C
      &             myMesh%nbvvnc_dims(1), myMesh%barht_id)
             if(myMesh%hasInternalWeirs)then
                 CALL check_err(iret)
-                iret = nf90_def_var(ncid, 'ibconn', NF90_INT, 
+                iret = nf90_def_var(ncid, 'ibconn', NF90_INT,
      &                 myMesh%nbvvnc_dims(1), myMesh%ibconn_id)
                 CALL check_err(iret)
                 iret = nf90_def_var(ncid, 'barsb', NF90_DOUBLE,
@@ -10152,7 +10168,7 @@ C        NBDV
          CALL check_err(iret)
          if(myMesh%hasWeirs)then
 !           BARHT
-            att_text = 
+            att_text =
      &         "external/internal barrier boundary height above geoid"
             iret = nf90_put_att(ncid, myMesh%barht_id, 'long_name',
      &             trim(att_text))
@@ -10187,21 +10203,21 @@ C        NBDV
                 call check_err(iret)
                 if(myMesh%hasPipes)then
 !                   PIPEHT
-                    att_text = 
+                    att_text =
      &                 "internal barrier boundary cross-barrier pipe height"
                     iret = nf90_put_att(ncid, myMesh%pipeht_id, "long_name",
      &                 trim(att_text))
                     iret = nf90_put_att(ncid, myMesh%pipeht_id, 'units', 'm')
                     call check_err(iret)
 !                   PIPEDIAM
-                    att_text = 
+                    att_text =
      &                 "internal barrier boundary cross-barrier pipe diameter"
                     iret = nf90_put_att(ncid, myMesh%pipediam_id, "long_name",
      &                 trim(att_text))
                     iret = nf90_put_att(ncid, myMesh%pipediam_id, 'units', 'm')
                     call check_err(iret)
 !                   PIPECOEF
-                    att_text = 
+                    att_text =
      &                 "internal barrier boundary cross-barrier pipe coefficient"
                     iret = nf90_put_att(ncid, myMesh%pipecoef_id, "long_name",
      &                 trim(att_text))
