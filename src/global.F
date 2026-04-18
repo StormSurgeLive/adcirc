@@ -2,17 +2,17 @@
 !
 ! ADCIRC - The ADvanced CIRCulation model
 ! Copyright (C) 1994-2023 R.A. Luettich, Jr., J.J. Westerink
-! 
+!
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
-! 
+!
 ! This program is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU General Public License for more details.
-! 
+!
 ! You should have received a copy of the GNU Lesser General Public License
 ! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !
@@ -52,9 +52,9 @@ C... v49.48 tcm -- added for coupling with STWAVE (NRS=4)
       REAL(8)  :: STARTWAVE   ! Start of Wave Service
       REAL(8)  :: ENDWAVE     ! End of Wave Service
       LOGICAL  :: CPL2STWAVE = .FALSE.  !Coupled to STWAVE (NRS=4)
-      LOGICAL  :: Flag_ElevError = .FALSE. 
+      LOGICAL  :: Flag_ElevError = .FALSE.
 C     DMW 202401 Check for velocity exceeding error level
-      LOGICAL  :: Flag_VelError = .FALSE.     
+      LOGICAL  :: Flag_VelError = .FALSE.
 
 C
 C... v50.xx sm -- added for coupling with NOUPC Cap
@@ -63,8 +63,8 @@ C... v50.xx sm -- added for coupling with NOUPC Cap
 
 C... TCM v56 2024 --- added variable for using a limiter or cap
 C           on wave stress gradients
-      LOGICAL   ::  Limit_WaveStressGrad = .FALSE. ! set in fort.15 file 
-      
+      LOGICAL   ::  Limit_WaveStressGrad = .FALSE. ! set in fort.15 file
+
 
 C      real(8) rampriver,drampriver,rampriver1,rampriver2
 C     jgf46.08 Fine grained ramp functions (jgf46.21 split flux b.c.s)
@@ -98,22 +98,22 @@ C     Variables related to hotstarting.
       end type HOTSTART_t
 
       type(HOTSTART_t):: hss
-      !       
+      !
       ! iLump=0 for consistent mass matrix
-      ! iLump=1 for lumped mass matrix 
-      integer :: ilump 
+      ! iLump=1 for lumped mass matrix
+      integer :: ilump
 
       real(8),allocatable,target ::   mom_lv_x(:)
       real(8),allocatable ::   mom_lv_y(:)
 
       !-----------------------------------------------------------------
-      !        F U L L   D O M A I N   V A R I A B L E S   
-      !                  O N L Y   U S E D   
+      !        F U L L   D O M A I N   V A R I A B L E S
+      !                  O N L Y   U S E D
       !        I N   P A R A L L E L   E X E C U T I O N
       !-----------------------------------------------------------------
       ! jgf51.21.25: The variables in this section are only used in
       ! parallel execution but they are declared here (rather than in
-      ! the messenger module) because they are used in many different 
+      ! the messenger module) because they are used in many different
       ! modules, including harm.F, write_output.F, globalio.F et al.
       !-----------------------------------------------------------------
       integer :: comm        ! MPI communicator.
@@ -123,7 +123,7 @@ C     jgf48.03 Arrays for mapping subdomain nodes and elements to full
 C     domain ... used in globalio module but allocated and populated
 C     in messenger module
       integer,allocatable,target :: nodes_lg(:)
-      integer,allocatable,target :: imap_el_lg(:) 
+      integer,allocatable,target :: imap_el_lg(:)
 C
 C     global number of elevation, velocity, and meteorological stations
       integer :: nstae_g, nstav_g, nstam_g
@@ -141,8 +141,8 @@ C     for writing fulldomain hotstart files.
       REAL(8), ALLOCATABLE, TARGET :: VV2_g(:)
       REAL(8), ALLOCATABLE, TARGET :: CH1_g(:)
 
-      REAL(8), ALLOCATABLE, TARGET :: HTOT1_g(:) 
-      REAL(8), ALLOCATABLE, TARGET :: HTOT2_g(:) 
+      REAL(8), ALLOCATABLE, TARGET :: HTOT1_g(:)
+      REAL(8), ALLOCATABLE, TARGET :: HTOT2_g(:)
 
       INTEGER, ALLOCATABLE, TARGET :: labels_g(:)
       INTEGER, ALLOCATABLE, TARGET :: NodeCode_g(:)
@@ -151,21 +151,21 @@ C     for writing fulldomain hotstart files.
       ! full domain min and max files in parallel
       !tcm v51.20.01 added variable for time of max (time is referenced off TimeLoc)
       REAL(8),ALLOCATABLE, TARGET :: HOT_ETAMAX_G(:)
-      REAL(8),ALLOCATABLE, TARGET :: ETAMAX_Time(:) 
-      REAL(8),ALLOCATABLE, TARGET :: ETAMAX_Time_G(:) 
+      REAL(8),ALLOCATABLE, TARGET :: ETAMAX_Time(:)
+      REAL(8),ALLOCATABLE, TARGET :: ETAMAX_Time_G(:)
       REAL(8),ALLOCATABLE, TARGET :: HOT_UMAX_G(:)
-      REAL(8),ALLOCATABLE, TARGET :: UMAX_Time(:) 
-      REAL(8),ALLOCATABLE, TARGET :: UMAX_Time_G(:) 
+      REAL(8),ALLOCATABLE, TARGET :: UMAX_Time(:)
+      REAL(8),ALLOCATABLE, TARGET :: UMAX_Time_G(:)
       REAL(8),ALLOCATABLE, TARGET :: HOT_PrMin_G(:)
-      REAL(8),ALLOCATABLE, TARGET :: PrMin_Time(:) 
-      REAL(8),ALLOCATABLE, TARGET :: PrMin_Time_G(:) 
+      REAL(8),ALLOCATABLE, TARGET :: PrMin_Time(:)
+      REAL(8),ALLOCATABLE, TARGET :: PrMin_Time_G(:)
       REAL(8),ALLOCATABLE, TARGET :: HOT_WVNOutMax_G(:)
-      REAL(8),ALLOCATABLE, TARGET :: WVNOutMax_Time(:) 
-      REAL(8),ALLOCATABLE, TARGET :: WVNOutMax_Time_G(:) 
+      REAL(8),ALLOCATABLE, TARGET :: WVNOutMax_Time(:)
+      REAL(8),ALLOCATABLE, TARGET :: WVNOutMax_Time_G(:)
       REAL(8),ALLOCATABLE, TARGET :: HOT_RSNMax_g(:)
-      REAL(8),ALLOCATABLE, TARGET :: RSNMax_Time(:) 
-      REAL(8),ALLOCATABLE, TARGET :: RSNMax_Time_G(:) 
-     
+      REAL(8),ALLOCATABLE, TARGET :: RSNMax_Time(:)
+      REAL(8),ALLOCATABLE, TARGET :: RSNMax_Time_G(:)
+
 #if defined CSWAN || defined ADCSWAN
       !...Global SWAN Arrays
       REAL(8), ALLOCATABLE, TARGET      :: SWAN_HSOut_g(:)
@@ -184,7 +184,7 @@ C     for writing fulldomain hotstart files.
       REAL(8), ALLOCATABLE, TARGET      :: SWAN_TM02MaxOut_g(:)
       REAL(8), ALLOCATABLE, TARGET      :: SWAN_TMM10MaxOut_g(:)
 #endif
-      
+
       ! mappings from subdomain to fulldomain for stations
       integer,allocatable,target :: imap_stae_lg(:)
       integer,allocatable,target :: imap_stav_lg(:)
@@ -204,7 +204,7 @@ C     jgf48.03 Variables shared between messenger and writer modules
       integer ::  realtype, dbletype
       !
       ! there is a separate mpi communicator for each dedicated
-      ! writer processor; their communicator ids are stored in the 
+      ! writer processor; their communicator ids are stored in the
       ! following array
       integer, allocatable ::  comm_writer(:)
       ! communicators for hotstart file writing !st3
@@ -225,7 +225,7 @@ C     jgf48.03 Variables shared between messenger and writer modules
       !----------------------------------------------------------------
 C     End of variables shared between messenger and other modules
       !----------------------------------------------------------------
-C     
+C
       INTEGER             :: FileFmtVersion      ! File format version.
 
 c..RJW merged 09/02/2008 Casey 071219: Added the following variable declaration for 3D mass balance.
@@ -249,19 +249,19 @@ c.
 #ifdef CSWAN
       REAL(8),ALLOCATABLE, TARGET ::  SWAN_WDragCo(:) !MVB
 #endif
-      REAL(8),ALLOCATABLE, TARGET ::  windDragOut(:) !MVB 
+      REAL(8),ALLOCATABLE, TARGET ::  windDragOut(:) !MVB
 
       REAL(8),ALLOCATABLE, TARGET ::  PrMin(:) ! v46.50 sb 11/11/2006
       REAL(8),ALLOCATABLE, TARGET ::  WVNOutMax(:) ! v46.50 sb 11/11/2006
-      
-      real(8), allocatable, target :: wvnxout(:) ! output wind velocity in x-dir at each node 
-      real(8), allocatable, target :: wvnyout(:) ! output wind velocity in y-dir at each node 
+
+      real(8), allocatable, target :: wvnxout(:) ! output wind velocity in x-dir at each node
+      real(8), allocatable, target :: wvnyout(:) ! output wind velocity in y-dir at each node
 
       real(8),allocatable :: gwce_lv(:)
 
 
-      
-#if defined CSWAN || defined ADCSWAN     
+
+#if defined CSWAN || defined ADCSWAN
       !...Local SWAN Arrays
       REAL(8), ALLOCATABLE, TARGET      :: SWAN_HSOut(:)
       REAL(8), ALLOCATABLE, TARGET      :: SWAN_DIROut(:)
@@ -278,7 +278,7 @@ c.
       REAL(8), ALLOCATABLE, TARGET      :: SWAN_WINDMaxOut(:)
       REAL(8), ALLOCATABLE, TARGET      :: SWAN_TM02MaxOut(:)
       REAL(8), ALLOCATABLE, TARGET      :: SWAN_TMM10MaxOut(:)
-#endif      
+#endif
 
 !  tcm v50.75 removed ifdef cswan to allow for use whenever nrs=3 or nrs=4
 !#ifdef CSWAN
@@ -287,8 +287,8 @@ Casey 090302: Added the following arrays for output of radiation stress gradient
 !#endif
       LOGICAL :: outputWindDrag = .false. ! true if wind drag data should be written to output file
 
-#if defined CSWAN || defined ADCSWAN      
-Cobell 20120510: Added logicals for turning on/off swan output files   
+#if defined CSWAN || defined ADCSWAN
+Cobell 20120510: Added logicals for turning on/off swan output files
       LOGICAL                      :: SWAN_OutputHS = .FALSE.
       LOGICAL                      :: SWAN_OutputDIR = .FALSE.
       LOGICAL                      :: SWAN_OutputTM01 = .FALSE.
@@ -327,10 +327,10 @@ Cobell -  Added the following for output of ESL at end of run
       REAL(8),ALLOCATABLE ::   FFF(:),FFACE(:)
       REAL(8),ALLOCATABLE ::   ESBIN1(:),ESBIN2(:)
       REAL(8),ALLOCATABLE ::   TEMP_LV_A(:,:),TEMP_LV_B(:,:)
- 
+
 C- DMW 2022/6 Factor for slope limiting on elevation gradient
       REAL(8),ALLOCATABLE ::   ALPHAL(:)
-C- DMW      
+C- DMW
       REAL(8),ALLOCATABLE ::   QN0(:),QN1(:)
       REAL(8),ALLOCATABLE, TARGET :: QN2(:)
       REAL(8),ALLOCATABLE ::   EN0(:),EN1(:),EN2(:)
@@ -398,7 +398,7 @@ C    kmd48.33bc - added variables for the levels of no motion and top temperatur
       INTEGER,ALLOCATABLE ::    NNODECODE(:)
       INTEGER,ALLOCATABLE ::    NIBNODECODE(:)
       !
-      ! lists of elements containing each station 
+      ! lists of elements containing each station
       integer, allocatable, target :: nnc(:) ! concentration station elements
       integer, allocatable, target :: nne(:) ! elevation station elements
       integer, allocatable, target :: nnv(:) ! velocity station elements
@@ -412,8 +412,8 @@ C.....for buoyancy forcing
       REAL(8),ALLOCATABLE ::   SigTS(:), NM(:), NB(:), MLD(:)
 C.....for scalar transport
       REAL(8),ALLOCATABLE ::   DAConc(:)
-      
-!     The vertically-integrated momentum dispersion terms     
+
+!     The vertically-integrated momentum dispersion terms
       REAL(8),ALLOCATABLE ::   VIDISPDXOH(:), VIDISPDYOH(:)
 
 C.....for VEW1D sb
@@ -421,7 +421,7 @@ C.....for VEW1D sb
 
 
       REAL(8) DT
-C                                
+C
       INTEGER NOLICA,NOLIFA,IHOT,IDEN
       INTEGER :: NSCREEN = 1
 C...
@@ -430,7 +430,7 @@ C...
 
       REAL(8) STATIM,REFTIM
       REAL(8) QTIME1,QTIME2
-      REAL(8), TARGET :: DTDP      
+      REAL(8), TARGET :: DTDP
 
       REAL(8) FTIMINC,RSTIME1,RSTIME2,RSTIMINC
 
@@ -493,7 +493,7 @@ C     jgf45.07 The definitions of many of these are in timestep.F
 C    kmd48.33bc  - logical statement for hot start using different time step
       ! This is .true. if the time step size of the current run is
       ! different from the time step size in the hotstart file; also
-      ! true for IDEN=1, 3D baroclinic runs 
+      ! true for IDEN=1, 3D baroclinic runs
       LOGICAL :: CHOTHS              = .FALSE.
 
 ! kmd - Evan's updates for rivers above MSL
@@ -504,10 +504,10 @@ C     the GWCE and Momentum equations, so that ADCIRC runs faster and
 C     only calculates the requested quantities.
       LOGICAL :: METONLY             = .FALSE.
 C
-C     jgf51.14: Moved the parameters that control output timing 
+C     jgf51.14: Moved the parameters that control output timing
 C     from read_input.F to here so that they can be used to recalculate
 C     starting and ending time step for output when the time step
-C     size has changed after a hotstart. 
+C     size has changed after a hotstart.
       REAL(8) TOUTSC
       REAL(8) TOUTSE,TOUTFE
       REAL(8) TOUTSV,TOUTFV
@@ -533,7 +533,7 @@ Corbitt 120322: Create Elemental Versions of IFNLCAT and IFNLCT
       INTEGER  IFWIND
       integer :: IFSFM = 0 ! corrected spherical coordinates (1) or not (0)
       integer :: IFSPROTS = 0 ! rotated spherical coordinates (1) or not (0)
-      ! 
+      !
       ! fulldomain (a.k.a. global) file position counters
       integer, target :: igcp ! concentration
       integer, target :: igep ! elevation
@@ -547,7 +547,7 @@ Corbitt 120322: Create Elemental Versions of IFNLCAT and IFNLCT
       integer, target :: ivstp ! file position in velocity station file
       integer, target :: iwstp ! file position in wind velocity station file
       integer, target :: ipstp ! position in barometric pressure station file
-      integer, target :: iestp ! file position in station elevation file 
+      integer, target :: iestp ! file position in station elevation file
       integer, target :: ig_tvw ! file position in weir elevation file
       integer, target :: nodeCodeOutFilePos
       integer, target :: noffOutFilePos
@@ -555,17 +555,17 @@ Corbitt 120322: Create Elemental Versions of IFNLCAT and IFNLCT
       ! jgf52.08.03: Some files (e.g., initiallydry.63 and endrisinginun.63)
       ! are only written once, but are written using the same subroutines
       ! that write time varying output files; the output subroutine increments
-      ! the file position counter; so we have to have a fake file position 
+      ! the file position counter; so we have to have a fake file position
       ! counter even for output files that are only written once.
-      integer, target :: fauxFilePosition 
+      integer, target :: fauxFilePosition
       ! jgf: added support for water level offset
       integer, target :: dynamicWaterLevelCorrectionFilePos
       integer, target :: dynamicWaterLevelCorrectionStaFilePos
 
       INTEGER  IHOTSTP, IMHS
       INTEGER  ITIME, ITEMPSTP
-      INTEGER  ITHS, ITITER    
-      
+      INTEGER  ITHS, ITITER
+
       INTEGER  LUMPT ! =1/0; LUMP/DO NOT LUMP THE TRANSPORT EQN
       INTEGER  NDSETSC
       INTEGER  NCChange !jgf45.06 flag indicating wetting / drying has occurred
@@ -573,26 +573,24 @@ Corbitt 120322: Create Elemental Versions of IFNLCAT and IFNLCT
       INTEGER  NHSINC, NHSTAR
       LOGICAL :: NHOUTONCE = .false.
 !  tcm v50.75 removed ifdef cswan to allow for use whenever nrs=3 or nrs=4
-!#ifdef CSWAN 
+!#ifdef CSWAN
 Casey 090302: Added a variable for output of radiation stress gradients.
       INTEGER, TARGET :: IGRadS
 !#endif
       INTEGER  NOUTGC, NOUTGE, NOUTGV, NOUTGW, NOUTM, NOUT_TVW
-      INTEGER, TARGET :: NSCOUC, NSCOUE, NSCOUGC, NSCOUGE, NSCOUGV ! output spool counters
-      INTEGER, TARGET :: NSCOUGW, NSCOURS, NSCOUGP, NSCOUM, NSCOUV ! output spool counters
-      INTEGER, TARGET :: NSCOUGI, NSCOUGT, NSCOUGS  ! output spool counters
-      INTEGER, TARGET :: NSCOU_TVW ! output spool counters
-      INTEGER, TARGET :: NSCOUP ! output spool counter for fort.71 (bar. press. sta.)
-      INTEGER, TARGET :: NSCOUI ! output spool counter for fort.91 (ice sta.)     
-      integer, target :: nodeCodeOutSpoolCounter
-      integer, target :: noffOutSpoolCounter
-      integer, target :: initiallyDrySpoolCounter
-      integer, target :: windDragSpoolCounter
-      integer, target :: dynamicWaterLevelCorrectionSpoolCounter
-      integer, target :: dynamicWaterLevelCorrectionStaSpoolCounter
-      
       INTEGER :: NSPOOLC, NSPOOLGC, NSPOOLGE ! output increments
       INTEGER :: NSPOOLGV, NSPOOLGW, NSPOOLM, NSPOOL_TVW ! output increments
+      INTEGER :: NSCOUC, NSCOUE, NSCOUGC, NSCOUGE, NSCOUGV ! output spool counters
+      INTEGER :: NSCOUGW, NSCOURS, NSCOUGP, NSCOUM, NSCOUV ! output spool counters
+      INTEGER :: NSCOUGI, NSCOUGT, NSCOUGS  ! output spool counters
+      INTEGER :: NSCOU_TVW ! output spool counters
+      INTEGER :: NSCOUP ! output spool counter for fort.71 (bar. press. sta.)
+      INTEGER :: NSCOUI ! output spool counter for fort.91 (ice sta.)
+      integer :: nodeCodeOutSpoolCounter
+      integer :: noffOutSpoolCounter
+      integer :: windDragSpoolCounter
+      integer :: dynamicWaterLevelCorrectionSpoolCounter
+      integer :: dynamicWaterLevelCorrectionStaSpoolCounter
       INTEGER  NSTAC, NSTAM, NTCYFC, NTCYFGC, NTCYFGE
       INTEGER  NTCYFGV, NTCYFGW
       INTEGER  NTCYFM, NTCYSC, NTCYSGC, NTCYSGE
@@ -665,11 +663,11 @@ C     kmd48.33bc - added variables for 3D boundary conditions
       INTEGER NCCOUGE,NCCOUGW,NCCOUGV
 
 #ifdef ADCNETCDF
-      LOGICAL, PARAMETER :: netcdf_avail = .true. 
+      LOGICAL, PARAMETER :: netcdf_avail = .true.
 #else
       LOGICAL, PARAMETER :: netcdf_avail = .false. ! .true. if NetCDF support was compiled in
 #endif
-      
+
 ! CF Finish addition for NETCDF I/O
 
 ! TCM v49.64.01 Addition for Ice Concentration Fields
@@ -681,7 +679,7 @@ C     kmd48.33bc - added variables for 3D boundary conditions
 ! TCM V50.66.01 ADDITIONS FOR TIME VARYING BATHYMETRY
       INTEGER :: NDDT  !FLAG TO USE TIME VARYING BATHYMETRY
       REAL(8) :: BTIME1,BTIME2  !TIMES FOR TIME VARYING BATHYMETRY Records
-      REAL(8) :: BTIME_END  !time that 
+      REAL(8) :: BTIME_END  !time that
       !variables related to global bathymetry output file
       INTEGER, TARGET :: IGBP ! position in global bathy output file
       INTEGER :: NDSETSB,NTCYFGB,NTCYSGB,NTRSPB
@@ -689,7 +687,7 @@ C     kmd48.33bc - added variables for 3D boundary conditions
       !variables related to station bathymetry output file
       INTEGER :: NTCYSB,NTCYFB
       INTEGER, TARGET :: NSCOUB
-      INTEGER, TARGET :: IBSTP  ! position in station bathy output file      
+      INTEGER, TARGET :: IBSTP  ! position in station bathy output file
       REAL(8) :: BTIMINC ! TIME INCREMENT (SECONDS) FOR BATHYMETRY CHANGES USED FOR TIME VARYING BATHYMETRY
       REAL(8) :: BCHGTIMINC ! time increment (seconds) over which bathymetry changes during a btimeinc interval
       REAL(8),ALLOCATABLE, TARGET ::  DP00(:)
@@ -706,7 +704,7 @@ C     kmd48.33bc - added variables for 3D boundary conditions
                                             ! 0 is use nearest neighbor if wet and H > 0.8H0
                                             ! 1 is use nearest neighbor if wet regardless if H > 0.8H0
 
-      ! 
+      !
       ! all info needed for self describing dataset in XDMF
       type xdmfMetaData_t
          integer*8 :: xdmfFortranObj  ! object associated with the file
@@ -715,10 +713,10 @@ C     kmd48.33bc - added variables for 3D boundary conditions
          real(8), allocatable :: tempCoord(:,:) ! holds Geometry data
          integer :: topologyID ! index of the Topology data in the output file
          integer, allocatable :: xdmf_nm(:,:)  ! 0-offset connectivity array
-         logical :: createdIDs        ! .true. if infoIDs have been created 
-         character(80) :: variable_name 
+         logical :: createdIDs        ! .true. if infoIDs have been created
+         character(80) :: variable_name
          integer :: variable_name_id
-         character(80) :: long_name 
+         character(80) :: long_name
          integer :: long_name_id
          character(80) :: standard_name
          integer :: standard_name_id
@@ -741,7 +739,7 @@ C     kmd48.33bc - added variables for 3D boundary conditions
 C
 C     jgf48.03 the following data structure is used to describe
 C     the size and shape of the output data.
-C     TCM48.4618 Added ConsiderWetDry, alternate_value and field_name 
+C     TCM48.4618 Added ConsiderWetDry, alternate_value and field_name
 C     elements to the structure
       type OutputDataDescript_t
         integer           :: lun
@@ -780,37 +778,46 @@ C     elements to the structure
         logical :: divideByDepth ! .true. if the solution must be divided by depth b/f output
         integer, allocatable :: writerFormats(:) ! formats that dedicated writers can write
         logical :: useWriter ! .true. if a dedicated writer should be used to write these data
-        integer :: file_extension  ! end of the file name       
+        integer :: file_extension  ! end of the file name
         character(len=32) :: file_basename  ! usually 'fort' but sometimes 'rads' etc
         real(8), pointer :: interped_array(:) ! array that stations spatially interpolate
         real(8), pointer :: interped_array2(:) ! array2 that stations spatially interpolate
         integer :: startTimeStep ! time step after which output should begin
-        integer :: endTimeStep   ! last time step when output should occur    
-        integer :: outputTimeStepIncrement ! num time steps between outputs          
-        integer, pointer :: spoolCounter ! counts time steps between outputs
-        integer, pointer :: filepos ! keeps track of position in output files
+        integer :: endTimeStep   ! last time step when output should occur
+        integer :: startTimeSec  ! time (seconds since coldstart) after which output should begin
+        integer :: endTimeSec    ! time (seconds since coldstart) when output should no longer occur
+        integer :: outputTimeStepIncrement ! num time steps between outputs
+        integer :: spoolCounter  ! counts time steps between outputs
+        integer, pointer :: filepos ! keeps track of position in binary output files
         integer, pointer :: elements(:) ! array of elements that contain the stations
         real(8), pointer :: interp_fac1(:) ! array of interp. factors for stations
-        real(8), pointer :: interp_fac2(:) ! array of interp. factors for stations        
+        real(8), pointer :: interp_fac2(:) ! array of interp. factors for stations
         real(8), pointer :: interp_fac3(:) ! array of interp. factors for stations
         logical :: initialized ! .true. if initialization has occurred (netcdf, xdmf)
         logical :: minmax_timestamp ! .true. if a time stamp will be written to a max file
         logical :: readMaxMin ! .true. if max/min file should be read upon hotstart
         type(xdmfMetaData_t) :: xdmfMD ! used if this data will be written to XDMF
         type(writerData_t) :: wMD ! used if this data will be written by dedicated writer
-      end type OutputDataDescript_t
+        ! jgf: The writeOutput2D() subroutine is executed after writeHotstart() is called
+        ! on any given timestep, so writeOutput2D() needs to calculate
+        ! the correct spool counter for use in the next call to writeHotstart(); otherwise the
+        ! spool counter in the hotstart file will not reflect the value of the
+        ! counter at the end of the timestep
+        integer :: spoolCounterHot  ! spool counter value to be written to hotstart file
+        end type OutputDataDescript_t
+
       !
-      ! inunThresh is used to set a minimum inundation depth for 
+      ! inunThresh is used to set a minimum inundation depth for
       ! accumulating inundationTime for detailed inundation output
       real(8) :: inunThresh = 0.6d0
       !
       ! inundationOutput can be set to .true. in read_input()
-      logical :: inundationOutput = .false. 
+      logical :: inundationOutput = .false.
 C.... DMW 202207 Added controls for slope/wind limiting and for using "new" vel formula in wet/dry routine.
 C....  Set these controls to off by default. (Large value on slim effectively assures limiter is not applied anywhere.)
       real(8) :: slim = 1.d9
       logical :: windlim = .false.
-      
+
       logical :: directvelWD = .false.,  useHF = .false.
 C.... DMW
 C
@@ -841,7 +848,7 @@ C     v49.48.01 tcm 20110126 Variables related to kdtree searches
       logical :: usingDynamicWaterLevelCorrection = .false.
       real(8), allocatable, target :: dynamicWaterLevelCorrectionSta(:)
 
-C----- DW --- periodic bc 
+C----- DW --- periodic bc
       INTEGER:: NPERSEG, NNPERBC
       INTEGER, ALLOCATABLE:: IPERCONN(:,:), PERBC_IDN_MAP(:)
 C-------------------end of data declarations----------------------------------C
@@ -1111,7 +1118,7 @@ C     ----------------------------------------------------------------
 C     jgf49.1001 Function to get the distance along the surface of
 C     a sphere (the earth's surface in this case).
 C     ----------------------------------------------------------------
-      REAL(8) FUNCTION sphericalDistance(dx, dy, y1, y2)
+      PURE REAL(8) FUNCTION sphericalDistance(dx, dy, y1, y2)
       USE ADC_CONSTANTS,only: deg2rad, rearth
       IMPLICIT NONE
       REAL(8), intent(in) :: DX    ! longitude distance in radians
@@ -1138,7 +1145,7 @@ C...
       SUBROUTINE ALLOC_MAIN1a()
       USE SIZES, ONLY : MNP, MNE
       IMPLICIT NONE
-C  
+C
       !jgfdebug TODO: rationalize initialization of these variables
       ALLOCATE ( ETAS(MNP))
       etas = -99999.d0
@@ -1187,7 +1194,7 @@ C.....DMW202401 Added variables for tracking flow depths
       h1(:) = -99999.d0
       h2(:) = -99999.d0
       ALLOCATE ( CORIF(MNP))
-      corif(:) = -99999.d0      
+      corif(:) = -99999.d0
       ALLOCATE ( NODECODE(MNP))
       nodecode = -99999
       ALLOCATE ( DASigT(MNP),DATemp(MNP),DASalt(MNP))
@@ -1224,7 +1231,7 @@ C    loadEleSlopeLim.eqv..true
 C     Allocate an array for VEW1D
       ALLOCATE (flgNodesMultipliedByTotalArea(MNP))
       flgNodesMultipliedByTotalArea = 0
-      
+
 #ifdef CMPI
       ALLOCATE ( IDUMY(1), DUMY1(1), DUMY2(1) )
 #endif
@@ -1235,9 +1242,9 @@ C     Allocate an array for VEW1D
       ALLOCATE(EtaDisc(MNP))
       EtaDisc(:) = -99999.d0
       ALLOCATE ( ETAMAX(MNP)) ! v46.50 sb 11/11/2006
-      ALLOCATE ( ETAMAX_TIME(MNP)) ! tcm v51.20.01 
+      ALLOCATE ( ETAMAX_TIME(MNP)) ! tcm v51.20.01
       ALLOCATE ( UMAX(MNP)) ! v46.50 sb 11/11/2006
-      ALLOCATE ( UMAX_TIME(MNP)) ! tcm v51.20.01 
+      ALLOCATE ( UMAX_TIME(MNP)) ! tcm v51.20.01
       ETAMAX(:) = -99999.d0 ! v46.50 sb 11/11/2006
       EtaMax_Time(:) = 0.d0
       UMAX(:) = 0.d0 ! v46.50 sb 11/11/2006
@@ -1485,7 +1492,7 @@ C
          CICE2(:) = 0.0d0 !tcm v49.64.01 added for ice concentration
          CICEOUT(:) = 0.0d0 !tcm v49.64.01 added for ice concentration
       ENDIF
-      
+
 #ifdef CSWAN
       ALLOCATE ( SWAN_WDragCo(MNP) ) !MVB
       SWAN_WDragCo(:) = 0.0d0 !MVB
@@ -1528,7 +1535,7 @@ C...
       SUBROUTINE ALLOC_MAIN13()
       USE SIZES, ONLY : MNP
       IMPLICIT NONE
-      
+
       ALLOCATE ( DP1(MNP), DP2(MNP) )
       DP1(:) = 0.D0
       DP2(:) = 0.D0
@@ -1536,10 +1543,10 @@ C...
       END SUBROUTINE ALLOC_MAIN13
 
       !-----------------------------------------------------------------
-      !                      S U B R O U T I N E   
+      !                      S U B R O U T I N E
       !                G E T    F O R M A T    I N T E G E R
       !-----------------------------------------------------------------
-      ! Sets file format integer that corresponds to the file 
+      ! Sets file format integer that corresponds to the file
       ! format string.
       !-----------------------------------------------------------------
       subroutine getFormatInteger(typeString, typeHolder)
@@ -1549,17 +1556,17 @@ C...
       !
       select case(trim(typeString))
       case('OFF')
-         typeHolder = 0 
+         typeHolder = 0
       case('ASCII')
          typeHolder = 1
       case('BINARY')
-         typeHolder = 2 
+         typeHolder = 2
       case('NETCDF3')
-         typeHolder = 3 
+         typeHolder = 3
       case('SPARSE_ASCII')
-         typeHolder = 4 
+         typeHolder = 4
       case('NETCDF4')
-         typeHolder = 5 
+         typeHolder = 5
       case('XDMF')
          typeHolder = 7
       case default
@@ -2019,11 +2026,11 @@ C     available to different parts of ADCIRC.
 
 !-----------------------------------------------------------------------
 !     @brief Internal norm2 function
-!     If the compiler supports Fortran 2008 then the intrinsic is used. 
-!     Otherwise, the implementation is provided here. Use the compiler 
+!     If the compiler supports Fortran 2008 then the intrinsic is used.
+!     Otherwise, the implementation is provided here. Use the compiler
 !     flag -DNOF2008 to enable the internal implementation. norm2
 !     calculates the Euclidean vector norm (L2 norm) of an array
-!     @param[in] x array to calculate the L2 norm of 
+!     @param[in] x array to calculate the L2 norm of
 !     @result euclidean vector norm of x
 !-----------------------------------------------------------------------
       pure function adcirc_norm2(x)
@@ -2034,7 +2041,7 @@ C     available to different parts of ADCIRC.
 #ifdef NOF2008
         intrinsic            :: dot_product, sqrt
         adcirc_norm2 = sqrt(dot_product(x,x))
-#else 
+#else
         intrinsic            :: norm2
         adcirc_norm2 = norm2(x)
 #endif
@@ -2058,7 +2065,7 @@ C     available to different parts of ADCIRC.
             IF(idx.GT.0)lowercase(I:I)=low(IDX:IDX)
           ENDDO
       END FUNCTION toLowercase
-      
+
       FUNCTION toUppercase(string) RESULT(uppercase)
           IMPLICIT NONE
           CHARACTER(*),INTENT(IN)  :: string

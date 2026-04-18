@@ -2,17 +2,17 @@
 !
 ! ADCIRC - The ADvanced CIRCulation model
 ! Copyright (C) 1994-2023 R.A. Luettich, Jr., J.J. Westerink
-! 
+!
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU Lesser General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
-! 
+!
 ! This program is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU General Public License for more details.
-! 
+!
 ! You should have received a copy of the GNU Lesser General Public License
 ! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !
@@ -28,12 +28,12 @@ C
        USE GLOBAL, ONLY : ScreenUnit, setMessageSource, allMessage,
      &    screenMessage, logMessage, unsetMessageSource,
      &    DEBUG, ECHO, INFO, WARNING, ERROR, scratchMessage,
-     &    sphericalDistance, openFileForRead, RNDAY, cice_timinc, 
+     &    sphericalDistance, openFileForRead, RNDAY, cice_timinc,
      &    cice_time1, cice_time2
 #ifdef DATETIME
      &   ,basedatetime
 #endif
-       USE ADC_CONSTANTS, ONLY: pi, deg2rad, rad2deg, e, PRBCKGRND, g, 
+       USE ADC_CONSTANTS, ONLY: pi, deg2rad, rad2deg, e, PRBCKGRND, g,
      &                      rhoWat0, Rearth, rhoAir, one2ten,
      &                      windReduction
 #ifdef CMPI
@@ -101,19 +101,19 @@ C
       ! jgf49.1001 Variables for use in NWS=29, for embedding an asymmetric
       ! vortex from NWS19 into an OWI basin scale met field from NAM
       ! using NWS12
-      REAL(8) vortexRMW  ! Rmax of vortex data, nautical miles
-      REAL(8) vortexLat  ! @center of vortex, degrees west latitude
-      REAL(8) vortexLon  ! @center of vortex, degrees north longitude
+      REAL(8) :: vortexRMW = 0.0d0 ! Rmax of vortex data, nautical miles
+      REAL(8) :: vortexLat = 0.0d0 ! @center of vortex, degrees west latitude
+      REAL(8) :: vortexLon = 0.0d0 ! @center of vortex, degrees north longitude
       REAL(8), ALLOCATABLE :: vortexWVNX2(:) ! u wind vel from vortex model
       REAL(8), ALLOCATABLE :: vortexWVNY2(:) ! v wind vel from vortex model
       REAL(8), ALLOCATABLE :: vortexPRN2(:)  ! bar. press. from vortex model
       !
       ! radial extent of unblended vortex winds, normalized to current Rmax
-      REAL(8) pureVortex
+      REAL(8) :: pureVortex = 0.0d0
       !
       ! radial distance to point where vortex effects insignificant,
       ! normalized to current Rmax
-      REAL(8) pureBackground
+      REAL(8) :: pureBackground = 0.0d0
       !
       ! jgf50.32: The wind drag limit was originally set to 0.002d0
       ! in v46 ... the higher value of 0.0035d0 was used in ~v48 and
@@ -134,7 +134,7 @@ C
       ! jgf50.32 Provide backward compatibility with hardcoded POWELL
       ! support.
 #warning The flag -DPOWELL is deprecated and will be removed in a future release. Please use the &metcontrol name list functionality to avoid issues
-      
+
       CHARACTER(len=10) :: DragLawString = 'Powell'
       INTEGER :: dragLawType = DRAGLAW_POWELL
 #endif
@@ -259,8 +259,8 @@ C
       logical :: dynamicWaterLevelCorrectionFileEnded = .false. ! true when all data have been read
 #ifdef DATETIME
       integer :: ub, ubc ! size of weightsp and indp interpolant weights
-      real(8),allocatable :: weightsp(:,:,:) 
-      integer,allocatable  :: indp(:,:,:) 
+      real(8),allocatable :: weightsp(:,:,:)
+      integer,allocatable  :: indp(:,:,:)
       character(len=200) :: Pfile, Wfile, Pinv, Winv, Cinv, Cfile
       character(len=200) :: Wfile1, Pinv1, Winv1
       INTEGER :: PfileNCID, WfileNCID, CfileNCID, Wfile1NCID
@@ -272,12 +272,12 @@ C
 #endif
 
       logical:: read_NWS14_NetCdf_using_core_0 = .true. ! read NWS14 (grib2,netcdf) from a computed core 0
- 
+
       real(8) :: wtime1_12 ! time associated with previous met dataset
       real(8) :: wtime2_12 ! time associated with new met dataset
       real(8) :: wtiminc_12 ! time increment between met datasets (seconds)
       logical  :: change_14 ! true when the NWS = 14 data has been updated
-      logical,allocatable :: hasdata(:) ! if OWI data exists at this vertex       
+      logical,allocatable :: hasdata(:) ! if OWI data exists at this vertex
       !...Function interface for wind drag
       !   Used so that the selection of wind drag
       !   is only performed once. Each wind drag
@@ -321,7 +321,7 @@ C     ----------------------------------------------------------------
       use mesh, only : np
       use global, only: NWS
       implicit none
-      
+
       call setMessageSource("initWindModule")
 #if defined(WIND_TRACE) || defined(ALL_TRACE)
       call allMessage(DEBUG,"Enter.")
@@ -332,7 +332,7 @@ C     ----------------------------------------------------------------
       allocate ( prn2(np) )
 
       if (NWS.eq.-14) allocate ( HasData(np) )
-C     WJP: this is the value used in the surface stress computation  
+C     WJP: this is the value used in the surface stress computation
 C     (can contol through the rhoAir parameter in namelist)
       airwaterdensityrat = rhoAir / rhoWat0
 
@@ -352,18 +352,24 @@ C.... convert background pressure from millibars to meters of water
       CALL checkWindDragType()
       CALL mapWindDragFunctionPointer()
 
-      if (NWS.eq.0) return
+      if (NWS.eq.0) then
+#if defined(WIND_TRACE) || defined(ALL_TRACE)
+         call allMessage(DEBUG,"Return.")
+#endif
+         call unsetMessageSource()
+         return
+      endif
 
-      ! Make logicals here if NWS is not 0 
+      ! Make logicals here if NWS is not 0
       garatt = .false.; swell = .false.; powell = .false.
       SELECT CASE(TRIM(DragLawString))
          CASE("Garratt","GARRATT","garratt","default")
              garatt = .true.
-             write(16,*) 'Garratt drag law used' 
+             write(16,*) 'Garratt drag law used'
 #ifdef CSWAN
          CASE("Swell","SWELL","swell")
              swell   = .true.
-             write(16,*) 'Swell drag law used' 
+             write(16,*) 'Swell drag law used'
 #endif
          CASE("Powell","POWELL","powell")
              if (NWS.eq.12.or.NWS.eq.29.or.NWS.eq.30) then
@@ -373,7 +379,7 @@ C.... convert background pressure from millibars to meters of water
                 write(16,*) 'Powell drag law used'
              else
                 garatt = .true.
-                write(16,*) 'Garratt drag law used because NWS ', 
+                write(16,*) 'Garratt drag law used because NWS ',
      &                      'incompatible with Powell'
              endif
          CASE DEFAULT
@@ -758,11 +764,11 @@ C....... and Ray's Ice for low ice values and low winds
      &              + 0.2d0*pic*pic*pic)*0.01d0
             WindIceDrag = max(IceDrag,WindDrag)
          ENDIF
-      
+
       CASE("Lupkes","default","Powell")
 C........This formula is a function that explicitly
 C....... combines air-sea drag (Garratt) with sea-ice skin drag and
-C....... sea-ice form drag components with area fraction weights 
+C....... sea-ice form drag components with area fraction weights
 C....... see: Lüpkes, et al. (2012), JGR: doi:10.1029/2012JD017630. &
 C....... Joyce et al. (2019), OM: doi:10.1016/j.ocemod.2019.101421
          IF (PercentIce.lt.0.d0) then
@@ -796,19 +802,23 @@ C     ----------------------------------------------------------------
 C     jgf49.1001 Subroutine to get the blending factor for combining
 C     NWS19 and NWS12 (from NAM) met data.
 C     ----------------------------------------------------------------
-      SUBROUTINE getBlendFactor(i, bf)
+      pure real(8) function getBlendFactor(i, vortex_rmw,
+     &                                     vortex_distance,
+     &                                     background_distance) result(bf)
       USE MESH, ONLY : SLAM, SFEA
       IMPLICIT NONE
       INTEGER, intent(in) :: i  ! node number
-      REAL(8), intent(out):: bf       ! blend factor, 0 to 1
-      REAL(8) XCOOR ! longitude of node in degrees
-      REAL(8) YCOOR ! latitude of node in degrees
+      REAL(8), intent(in) :: vortex_rmw
+      REAL(8), intent(in) :: vortex_distance
+      REAL(8), intent(in) :: background_distance
+      REAL(8) :: XCOOR ! longitude of node in degrees
+      REAL(8) :: YCOOR ! latitude of node in degrees
 C     distance from center of vortex to mesh node:
-      REAL(8) DX    ! longitude distance in radians
-      REAL(8) DY    ! latitude distance in radians
-      REAL(8) rad   ! point-to-point distance over a sphere, in meters
-      REAL(8) vortexOnly ! radial distance to edge of pure vortex, meters
-      REAL(8) backgroundOnly ! radial dist to undisturbed background, meters
+      REAL(8) :: DX    ! longitude distance in radians
+      REAL(8) :: DY    ! latitude distance in radians
+      REAL(8) :: rad   ! point-to-point distance over a sphere, in meters
+      REAL(8) :: vortexOnly ! radial distance to edge of pure vortex, meters
+      REAL(8) :: backgroundOnly ! radial dist to undisturbed background, meters
 C
       XCOOR=SLAM(I)*RAD2DEG
       YCOOR=SFEA(I)*RAD2DEG
@@ -821,25 +831,24 @@ C     node along a sphere
       rad = sphericalDistance(DX, DY, vortexLat, YCOOR)
 C
 C     compute the radial distances to the various regions, in meters
-      vortexOnly = pureVortex * vortexRMW
+      vortexOnly = vortex_distance * vortex_rmw
      &           * 1.852000003180799d0 * 1000.0d0
-      backgroundOnly = pureBackground * vortexRMW
+      backgroundOnly = background_distance * vortex_rmw
      &           * 1.852000003180799d0 * 1000.0d0
 C     determine which interpolation region this mesh node falls in
-      IF ( rad.le.vortexOnly ) bf = 1.0d0
-      IF ( rad.ge.backgroundOnly ) bf = 0.0d0
-C     interpolate linearly based on radial distance in the blended region
-      IF ( (rad.gt.vortexOnly).and.(rad.lt.backgroundOnly) ) THEN
+      IF ( rad.le.vortexOnly ) THEN
+        bf = 1.0d0
+      ELSEIF ( rad.ge.backgroundOnly )THEN
+        bf = 0.0d0
+      ELSE
+C        interpolate linearly based on radial distance in the blended region
          bf = (backgroundOnly-rad)/(backgroundOnly-vortexOnly)
-Cjgfdebug         WRITE(16,*) "bf is ", bf
          IF ( (bf.gt.1.0d0).or.(bf.lt.0.0d0) ) THEN
             bf = 0.0d0
          ENDIF
       ENDIF
-Cjgfdebug      WRITE(16,*) vortexLat, vortexLon, vortexRMW, rad, bf
-      RETURN
 C     ----------------------------------------------------------------
-      END SUBROUTINE getBlendFactor
+      END FUNCTION getBlendFactor
 C     ----------------------------------------------------------------
 
 C***********************************************************************
@@ -899,7 +908,7 @@ C     particular point in time.
 C----------------------------------------------------------------------
       subroutine getMeteorologicalForcing(nws, wsx2, wsy2, pr2,
      &   wvnxout, wvnyout, timeloc)
-      use owiwind,only : nws12get, findStormCenter    ! sb added 09/xx/2006     
+      use owiwind,only : nws12get, findStormCenter    ! sb added 09/xx/2006
       use global, only : ciceout, h0, eta2, ncice, rampmete,
      &   sponge, res_bc_flag, IDEN, SigTS, cice1, cice2, IFSPROTS
       USE ADC_CONSTANTS, only: g
@@ -925,7 +934,7 @@ C----------------------------------------------------------------------
       real(8) :: wDragCo
       real(8) :: windMag
       real(8) :: wtratio ! used to time interpolated between met datasets
-      real(8) :: cicenow, icedragco, ctratio, icemag, icex, icey 
+      real(8) :: cicenow, icedragco, ctratio, icemag, icex, icey
       integer :: nhg ! node number temp
       real(8) :: bf ! blend factor for multiple sets of wind data
       integer :: i ! node loop counter
@@ -1255,11 +1264,11 @@ C     formula is used to compute wind stress from the wind velocity.
                WVNY1(I)=WVNY2(I)
                PRN1(I)=PRN2(I)
             END DO
-            IF (NCICE.eq.10) THEN 
+            IF (NCICE.eq.10) THEN
                cice1 = cice2
-               call nws10get(wvnx2,wvny2,prn2,cice2) 
+               call nws10get(wvnx2,wvny2,prn2,cice2)
             ELSE
-               call nws10get(wvnx2,wvny2,prn2) 
+               call nws10get(wvnx2,wvny2,prn2)
             ENDIF
          ENDIF
          WTRatio=(TimeLoc-WTIME1)/WTIMINC
@@ -1279,7 +1288,7 @@ C     jgf46.00 Add directional wind reduction.
      &         CALL ApplyCanopyCoefficient(I,WindX,WindY)
 C    TCM V49.64.01 ADDED ICE EFFECTS ON WIND DRAG COEFF
             IF (NCICE.eq.10) then
-               Cicenow = 100d0*( CICE1(I) + 
+               Cicenow = 100d0*( CICE1(I) +
      &                           WTRatio*( CICE2(I)-CICE1(I) ) )
                WDragCo = WindIceDrag(WDragCo,Cicenow)
             ELSEIF (NCICE.NE.0) THEN
@@ -1373,7 +1382,7 @@ C     WJP: Added for NWS = 14 (GRIB2 e.g. CFS)
                   CICE1 = CICE2
                   CALL NWS14GET(WVNX2,WVNY2,PRN2,CICE2)
                ELSE
-                  CALL NWS14GET(WVNX2,WVNY2,PRN2) 
+                  CALL NWS14GET(WVNX2,WVNY2,PRN2)
                ENDIF
 #endif
 #endif
@@ -1434,7 +1443,7 @@ C     WJP: Added for NWS = 14 (GRIB2 e.g. CFS)
             ENDIF
 C    TCM V49.64.01 ADDED ICE EFFECTS ON WIND DRAG COEFF
             IF (NCICE.eq.14) then
-               Cicenow = 100d0*(CICE1(I) + 
+               Cicenow = 100d0*(CICE1(I) +
      &                          CTRATIO*(CICE2(I)-CICE1(I)))
                WDragCo = WindIceDrag(WDragCo,Cicenow)
                ciceout(i) = Cicenow ! GML added 20210727
@@ -1626,7 +1635,7 @@ C     NWS19 into an OWI basin scale met field from NWS12 (derived from NAM).
             ENDIF
             IF (LoadCanopyCoef)
      &         CALL ApplyCanopyCoefficient(I,WindX,WindY)
-            CALL getBlendFactor(I, bf)
+            bf = getBlendFactor(I, vortexRMW, pureVortex, pureBackground)
             ! blend the wind stresses and barometric pressures
             WSX2(I) = bf*RampMete*airwaterdensityrat*WDragCo*WindX*WindMag
      &               +(1.0d0-bf)*WSX2(I)
@@ -1717,7 +1726,7 @@ C    kmd48.33bc - added in information for the sponge layer
             WSY2(I)=sponge(I)*WSY2(I)
          END DO
        END IF
-         
+
 !PV BEG:: NWS=17
 !... v50.xx sm, v55.xx PV, -- NWS=17 for NUOPC coupling
       IF(ABS(NWS).EQ.17) THEN
@@ -1815,7 +1824,7 @@ C----------------------------------------------------------------------
       use global, only : ciceout, h0, eta2, ncice, rampmete,
      &   sponge, res_bc_flag, statim, wsx1, wsy1, wsx2, wsy2, pr2, pr1,
      &   cice1, cice2
-      use owiwind,only : nws12init, nws12get, findStormCenter    ! sb added 09/xx/2006          
+      use owiwind,only : nws12init, nws12get, findStormCenter    ! sb added 09/xx/2006
       use nodalAttributes, only : applyDirectionalWindReduction,
      &   loadCanopyCoef, loadDirEffRLen, applyCanopyCoefficient
       use mesh, only : dp, ics, np
@@ -1935,7 +1944,7 @@ C....                           to correspond with having only a global wind fil
 C     jgf46.00 Added option to directly apply surface stress without any
 C     other correction factors.
 C     xyc52.30 corrected NWS=7 (wind stress input provided on a
-C     rectangular grid, same as NWS=6) 
+C     rectangular grid, same as NWS=6)
       IF(ABS(NWS).EQ.7) THEN
 C         OPEN(22,FILE=TRIM(INPUTDIR)//'/'//'fort.22')
 C         READ(22,*) (NHG,WVNX1(I),WVNY1(I),PRN1(I),I=1,NP)
@@ -2015,9 +2024,9 @@ C.....sb46.28sb01 NWS=-12 and 12 was added to deal with raw OWI files.  09/xx/20
          ! interpolate onto adcirc mesh
          IF (NCICE.eq.10) THEN
             cice1 = 0.d0
-            call nws10get(wvnx2,wvny2,prn2,cice2) 
-         ELSE 
-            call nws10get(wvnx2,wvny2,prn2) 
+            call nws10get(wvnx2,wvny2,prn2,cice2)
+         ELSE
+            call nws10get(wvnx2,wvny2,prn2)
          ENDIF
       ENDIF
 
@@ -2038,7 +2047,7 @@ C.....sb46.28sb01 NWS=-12 and 12 was added to deal with raw OWI files.  09/xx/20
          CALL NWS11GET()        !NOW INTERPOLATE 1st WIND FIELD
       ENDIF
       !
-      ! 
+      !
 #ifdef DATETIME
 #if defined(GRIB2API) || defined(ADCNETCDF)
       IF (ABS(NWS).eq.14) THEN
@@ -2050,12 +2059,12 @@ C.....sb46.28sb01 NWS=-12 and 12 was added to deal with raw OWI files.  09/xx/20
          ! Get the first wind snap
          if (NCICE.eq.14) then
             CICE_TIME1 = WTIME1
-            CICE_TIME2 = CICE_TIME1 + CICE_TIMINC 
+            CICE_TIME2 = CICE_TIME1 + CICE_TIMINC
             CALL NWS14GET(WVNX1,WVNY1,PRN1,CICE1)
          else
             CALL NWS14GET(WVNX1,WVNY1,PRN1)
          endif
-         ! Get owi winds (should only overwrite where they exist) 
+         ! Get owi winds (should only overwrite where they exist)
          if (NWS.eq.-14) then
             CALL NWS12INIT(WVNX1,WVNY1,PRN1,NP,PRBCKGRND)
             CALL NWS12GET(WVNX1,WVNY1,PRN1,NP,PRBCKGRND,HasData)
@@ -2068,7 +2077,7 @@ C.....sb46.28sb01 NWS=-12 and 12 was added to deal with raw OWI files.  09/xx/20
          else
             CALL NWS14GET(WVNX2,WVNY2,PRN2)
          endif
-         ! Get owi winds (should only overwrite where they exist) 
+         ! Get owi winds (should only overwrite where they exist)
          if (NWS.eq.-14) then
             CALL NWS12GET(WVNX2,WVNY2,PRN2,NP,PRBCKGRND,HasData)
          endif
@@ -2159,7 +2168,7 @@ C----------------------------------------------------------------------
       real(8) :: wDragCo
       real(8) :: windMag
       real(8) :: wtratio ! used to time interpolated between met datasets
-      real(8) :: cicenow, ctratio 
+      real(8) :: cicenow, ctratio
       integer :: nhg ! node number temp
       real(8) :: bf ! blend factor for multiple sets of wind data
       real(8) :: vortexPRDIFF
@@ -2744,12 +2753,12 @@ C     formula is used to compute wind stress from the wind velocity.
          ! read from fort.200 and spatially interpolate onto adcirc mesh
          IF (NCICE.eq.10) THEN
             ! read from fort.200 and spatially interpolate onto adcirc mesh
-            call nws10get(wvnx1,wvny1,prn1,cice1)          
+            call nws10get(wvnx1,wvny1,prn1,cice1)
             ! read from first file after fort.200 and spatially interpolate onto adcirc mesh
             call nws10get(wvnx2,wvny2,prn2,cice2)
          else
             ! read from fort.200 and spatially interpolate onto adcirc mesh
-            call nws10get(wvnx1,wvny1,prn1)          
+            call nws10get(wvnx1,wvny1,prn1)
             ! read from first file after fort.200 and spatially interpolate onto adcirc mesh
             call nws10get(wvnx2,wvny2,prn2)
          endif
@@ -2771,7 +2780,7 @@ C     jgf46.00 Add directional wind reduction.
      &         CALL ApplyCanopyCoefficient(I,WindX,WindY)
 C    TCM V49.64.01 ADDED ICE EFFECTS ON WIND DRAG COEFF
             IF (NCICE.eq.10) then
-               Cicenow = 100d0*( CICE1(I) + 
+               Cicenow = 100d0*( CICE1(I) +
      &                           WTRatio*( CICE2(I)-CICE1(I) ) )
                WDragCo = WindIceDrag(WDragCo,Cicenow)
             ELSEIF (NCICE.NE.0) THEN
@@ -2962,7 +2971,7 @@ C     from NAM data
             ENDIF
             IF (LoadCanopyCoef)
      &         CALL ApplyCanopyCoefficient(I,WindX,WindY)
-            CALL getBlendFactor(I, bf)
+            bf = getBlendFactor(I, vortexRMW, pureVortex, pureBackground)
             WSX2(I) = bf*RampMete2*airwaterdensityrat*WDragCo*WindX*WindMag
      &               +(1.0d0-bf)*WSX2(I)
             WSY2(I) = bf*RampMete2*airwaterdensityrat*WDragCo*WindY*WindMag
@@ -2999,7 +3008,7 @@ C     from NAM data
          else
             CALL NWS14GET(WVNX1,WVNY1,PRN1)
          endif
-         ! Get owi winds (should only overwrite where they exist) 
+         ! Get owi winds (should only overwrite where they exist)
          if (NWS.eq.-14) then
             CALL NWS12INIT(WVNX1,WVNY1,PRN1,NP,PRBCKGRND)
             CALL NWS12GET(WVNX1,WVNY1,PRN1,NP,PRBCKGRND,HasData)
@@ -3014,7 +3023,7 @@ C     from NAM data
          else
             CALL NWS14GET(WVNX2,WVNY2,PRN2)
          endif
-         ! Get owi winds (should only overwrite where they exist) 
+         ! Get owi winds (should only overwrite where they exist)
          if (NWS.eq.-14) then
             CALL NWS12GET(WVNX2,WVNY2,PRN2,NP,PRBCKGRND,HasData)
          endif
@@ -3041,7 +3050,7 @@ C     from NAM data
 C    TCM V49.64.01 ADDED ICE EFFECTS ON WIND DRAG COEFF
             IF(NCICE.NE.0) THEN
                if (NCICE.eq.14) then
-                  Cicenow = 100d0*(CICE1(I) + 
+                  Cicenow = 100d0*(CICE1(I) +
      &                             CTRATIO*(CICE2(I)-CICE1(I)))
                   WDragCo = WindIceDrag(WDragCo,Cicenow)
                else
@@ -3276,9 +3285,9 @@ C  tcm v49.16 20100617
        ! jgf52.14: Implementing Casey's fix for uninitialized
        ! wvnx1 and wvny1 arrays; they are not used/needed/initialized
        ! by the parametric vortex meteorological models but are used in
-       ! the padcswan_init() subroutine to initialize the SWAN wind 
-       ! velocities. Failure to initialize them causes NaNs in the 
-       ! solution. 
+       ! the padcswan_init() subroutine to initialize the SWAN wind
+       ! velocities. Failure to initialize them causes NaNs in the
+       ! solution.
        if ( (abs(nws).eq.8).or.(abs(nws).eq.19).or.(abs(nws).eq.20)) then
           WVNX1 = WVNX2
           WVNY1 = WVNY2
@@ -3286,17 +3295,17 @@ C  tcm v49.16 20100617
 
 C      DW/WJP: rotate wind stresses if coordinate transform
        IF ( IFSPROTS .eq. 1 ) THEN
-          UVECTMP(1:NP) = WSX2(1:NP); 
+          UVECTMP(1:NP) = WSX2(1:NP);
           VVECTMP(1:NP) = WSY2(1:NP);
           CALL DRVMAP2DSPVEC( WSX2, WSY2,
      &              UVECTMP, VVECTMP, NP, FWD = .TRUE. ) ;
        ENDIF
-      
+
 #if defined(WIND_TRACE) || defined(ALL_TRACE)
        call allMessage(DEBUG,"Return.")
 #endif
        call unsetMessageSource()
-      
+
 C--------------------END MET FORCING-----------------------------------
       end subroutine hotstartMeteorologicalForcing
 C--------------------END MET FORCING-----------------------------------
@@ -3795,7 +3804,7 @@ C     ----------------------------------------------------------------
       ! gaussian met values
       allocate ( ug(latb*lonb),vg(latb*lonb),pg(latb*lonb) )
       if (ncice.eq.10) allocate ( ig(latb*lonb) )
-      ! four corner met values in grid cell associated with each adcirc mesh vertex 
+      ! four corner met values in grid cell associated with each adcirc mesh vertex
       allocate ( n00(np),n10(np),n11(np),n01(np) )
       ! four interpolating factors associated with each adcirc mesh vertex
       allocate ( d00(np),d10(np),d11(np),d01(np) )
@@ -4069,10 +4078,10 @@ C.....Convert pressure from N/M^2 to M of H20
          pll(n)=pll(n)/rhowatg
       end do
 
-!     WJP: Interpolate ice concentration if present 
+!     WJP: Interpolate ice concentration if present
       if (present(ill)) then
          do n=1,np
-            ! grab the numerical values at the 4 corners of the grid 
+            ! grab the numerical values at the 4 corners of the grid
             ! cell containing this mesh node
             i1=ig(n00(n))
             i2=ig(n10(n))
@@ -5127,7 +5136,7 @@ C     Compute pressure field
 !     &        EXP(-(RMW*1000.d0/RAD(I))**B)) / (RHOWAT0*G)
          PRESS(I)=cpress+(centralPressureDeficit)*
      &        EXP(-(RMW*1000.d0/RAD(I))**B)
-C     Compute velocity field with absolute around 
+C     Compute velocity field with absolute around
 C     CORIOLIS for the Southern Hempisphere
          V_r(I) = sqrt(
      &        (RMW*1000.d0/RAD(I))**B *
@@ -5157,7 +5166,7 @@ C     Find the velocity components.
          WVNX(I)=-V_r(I)*SIN(THETA(I))
          WVNY(I)= V_r(I)*COS(THETA(I))
         endif
- 
+
 C
 C     jgf46.19 Convert wind velocity from top of atmospheric boundary
 C     layer (which is what the Holland curve fit produces) to wind
@@ -6427,8 +6436,8 @@ C***********************************************************************
       INTEGER, SAVE :: num_cycles ! num unique date/times in the fort.22
 
       REAL(8) :: rndaySeconds ! end time of the run in seconds
-      real(8) :: newVortexRMW ! average Rmax at icyc   (next fort.22 time value)
-      real(8) :: oldVortexRMW ! average Rmax at icyc-1 (previous fort.22 time value)
+      real(8) :: newVortexRMW = 0.0d0 ! average Rmax at icyc   (next fort.22 time value)
+      real(8) :: oldVortexRMW = 0.0d0 ! average Rmax at icyc-1 (previous fort.22 time value)
 
       call setMessageSource("nws20get")
 #if defined(WIND_TRACE) || defined(ALL_TRACE)
@@ -6459,7 +6468,7 @@ C***********************************************************************
             xcoor(i) = slam(i) * rad2deg
             ycoor(i) = sfea(i) * rad2deg
          END DO
-         
+
          timeOffset = nint(TIMELOC/60d0)*60d0 ! round initial time to nearest minute
          rndaySeconds = RNDAY * 86400.d0
 
@@ -7701,7 +7710,7 @@ C          Lines 4-end -- cycleTime  rampValue  filename
 C
 
        subroutine init_gfdl(timeloc)
-       use sizes, only : globaldir 
+       use sizes, only : globaldir
        use global, only : ihot, nws, nabout, openFileForRead,
      &                setMessageSource,unsetMessageSource,allMessage,
      &                logMessage,scratchMessage,DEBUG,ECHO,INFO,
@@ -8040,10 +8049,10 @@ C   IP = POWER TO RAISE DISTANCE (THE LARGER IP THE MORE INFLUENCE CLOSER POINTS
           IF ( IFSPROTS.eq. 1) THEN
              CALL DRVSPCOORSROTS( lonr, latr, LON_GFDL, LAT_GFDL )
           ELSE
-             latr = LAT_GFDL ;  lonr = LON_GFDL; 
+             latr = LAT_GFDL ;  lonr = LON_GFDL;
           END IF
           CALL CYLINDERMAP( XY_GFDL(1,I),XY_GFDL(2,I),
-     &           lonr, latr, SLAM0, SFEA0, ICS) ; 
+     &           lonr, latr, SLAM0, SFEA0, ICS) ;
        ENDDO !I
 
        CLOSE(LUN)  !CLOSE THIS GFDL DATA FILE
@@ -8802,7 +8811,7 @@ C.... as well as to improve input for TACC
 C----------------------------------------------------------------------
       implicit none
       INTEGER,INTENT(IN) :: NWS
-      
+
       ! Initialise the datetime
       CurDT = basedatetime + timedelta(minutes=floor(WTIME1/60d0))
       NT = 0; NTC = 0;
@@ -9115,7 +9124,7 @@ C----------------------------------------------------------------------
       integer :: i, ii, nxp, nyp, indt(4), NTkeep, xi, yi, cc
       real,allocatable,dimension(:,:) :: Pmsl, U10, V10, Cice, lat, lon
       real(8), allocatable ::  lonv(:), latv(:), XY(:,:)
-      real(8) :: xx, yy, wt(4) 
+      real(8) :: xx, yy, wt(4)
       logical :: regular_grid
       type(kdtree2), pointer :: tree
       ! determine if wind/pressure/ice grids match or not.
@@ -9147,7 +9156,7 @@ C----------------------------------------------------------------------
       ENDIF
       ! Allocate the indices and weights
       allocate(indp(ub,4,np),weightsp(ub,4,np))
-      ! Make the interpolant weights. If w 
+      ! Make the interpolant weights. If w
       do ii = 1,ub
          if (ii.eq.1) then
             CALL READNWS14LatLon(Pfile,lat,lon,Pinv,Pvar,PfileNCID)
@@ -9157,12 +9166,12 @@ C----------------------------------------------------------------------
          nxp = ubound(lon,1); nyp = ubound(lat,2)
          ! Check if structured regular..
          if (abs(lon(1,1) - lon(1,nyp)) < 1d-6) then
-            regular_grid = .true. 
+            regular_grid = .true.
             allocate(lonv(nxp),latv(nyp))
             lonv = lon(:,1)
             latv = lat(1,:)
-         else       
-            regular_grid = .false. 
+         else
+            regular_grid = .false.
             ! Convert point matrices to 2 X (NXP*NYP) point vector
             allocate(XY(2,nxp*nyp))
             cc = 0
@@ -9174,7 +9183,7 @@ C----------------------------------------------------------------------
                enddo
             enddo
             ! Create the search tree
-            tree => kdtree2_create(XY) 
+            tree => kdtree2_create(XY)
          endif
          ! Loop over each node and interpolate
          do i = 1,np
@@ -9214,18 +9223,18 @@ C----------------------------------------------------------------------
       ! Show the date in str_date format
       call logMessage(ECHO,'CurDT strng: '//
      &                CurDT%strftime("%Y-%m-%d %H:%M"))
-      
+
       ! Get the Pressure
       !':PRMSL:mean sea level:'
       call READNWS14(Pfile,Pmsl,Pinv,Pvar,PfileNCID)
 
-      ! Get the U-winds 
+      ! Get the U-winds
       call READNWS14(Wfile,U10,Winv,Uvar,WfileNCID)
-      
-      ! Get the V-winds 
+
+      ! Get the V-winds
       call READNWS14(Wfile1,V10,Winv,Vvar,Wfile1NCID)
 
-      ! Get the ice concentration if required 
+      ! Get the ice concentration if required
       if (present(CICE2)) then
          NTkeep = NT; NT = NTC
          call READNWS14(Cfile,Cice,Cinv,Cvar,CfileNCID)
@@ -9247,17 +9256,17 @@ C----------------------------------------------------------------------
 !         NTkeep = NT; NT = NTC
 !         call READNWS14(Cfile,Cinv,Cvar,Cice)
 !         NT = NTkeep
-!      endif      
+!      endif
 
       ! Doing the interpolation from their grid to ours
       do i = 1,np
          if (indp(1,1,i) < 0) then
             PRN2(i) = PRBCKGRND_MH2O
-         else           
-            PRN2(i) = ( Pmsl(indp(1,1,i),indp(1,2,i))*weightsp(1,1,i) + 
+         else
+            PRN2(i) = ( Pmsl(indp(1,1,i),indp(1,2,i))*weightsp(1,1,i) +
      &             Pmsl(indp(1,3,i),indp(1,2,i))*weightsp(1,2,i)      +
      &             Pmsl(indp(1,1,i),indp(1,4,i))*weightsp(1,3,i)      +
-     &             Pmsl(indp(1,3,i),indp(1,4,i))*weightsp(1,4,i) )  
+     &             Pmsl(indp(1,3,i),indp(1,4,i))*weightsp(1,4,i) )
      &              / rhoWat0g
          endif
          if (indp(ub,1,i) < 0) then
@@ -9272,21 +9281,21 @@ C----------------------------------------------------------------------
      &              V10(indp(ub,1,i),indp(ub,4,i))*weightsp(ub,3,i)    +
      &              V10(indp(ub,3,i),indp(ub,4,i))*weightsp(ub,4,i)
          endif
-      enddo 
+      enddo
       deallocate(Pmsl,U10,V10)
-      
-      ! Add WTIMINC on CurDT for next WTIME  
+
+      ! Add WTIMINC on CurDT for next WTIME
       CurDT = CurDT + timedelta(minutes=nint(WTIMINC/60d0))
       ! Next time index for the netcdf reading
       NT = NT + 1
-      
+
       ! If ice concentration is present
       if (present(CICE2)) then
          do i = 1,np
             if (indp(ubc,1,i) < 0) then
                CICE2(i) = 0d0;
             else
-               CICE2(i) = 
+               CICE2(i) =
      &             Cice(indp(ubc,1,i),indp(ubc,2,i))*weightsp(ubc,1,i) +
      &             Cice(indp(ubc,3,i),indp(ubc,2,i))*weightsp(ubc,2,i) +
      &             Cice(indp(ubc,1,i),indp(ubc,4,i))*weightsp(ubc,3,i) +
@@ -9305,8 +9314,8 @@ C----------------------------------------------------------------------
 C----------------------------------------------------------------------
       SUBROUTINE READNWS14(fileN,data2,invN,var,ncid)
 C----------------------------------------------------------------------
-C     CPB 10/2023: Added to make NWS = 14 more more readable. Simply 
-C     calls the appropriate subroutine based on the filetype we are 
+C     CPB 10/2023: Added to make NWS = 14 more more readable. Simply
+C     calls the appropriate subroutine based on the filetype we are
 C     using.
 C----------------------------------------------------------------------
       implicit none
@@ -9334,13 +9343,13 @@ C----------------------------------------------------------------------
 #ifdef GRIB2API
       use wgrib2api
 #endif
-      USE GL2LOC_MAPPING ,ONLY : BcastToLocal_2DRealArray, 
+      USE GL2LOC_MAPPING ,ONLY : BcastToLocal_2DRealArray,
      &                           BcastToLocal_Int
       USE SIZES, ONLY : MYPROC
       implicit none
       integer :: iret, iter
       character(len=200),intent(in) :: var, fileN, invN
-      real,allocatable,intent(out) :: data2(:,:) 
+      real,allocatable,intent(out) :: data2(:,:)
       character(len=200) :: str_date
       integer :: NX, NY
       CALL setMessageSource("READNWS14_grib2")
@@ -9348,7 +9357,7 @@ C----------------------------------------------------------------------
          ! Getting the date in str_date format
          str_date = ':start_FT='//CurDT%strftime("%Y%m%d%H")//'0000:'
          iret = -1; iter = 0
-         do while (iret.le.0.and.iter < 10) 
+         do while (iret.le.0.and.iter < 10)
             if (iter > 0) then
                call logMessage(WARNING,'Trying to read again '//var)
                call sleep(5)
@@ -9393,14 +9402,14 @@ C----------------------------------------------------------------------
       use netcdf
       use netcdf_error, only: check_err
 #endif
-      USE GL2LOC_MAPPING ,ONLY : BcastToLocal_2DRealArray, 
+      USE GL2LOC_MAPPING ,ONLY : BcastToLocal_2DRealArray,
      &                           BcastToLocal_Int
       USE SIZES, ONLY : MYPROC
       implicit none
 
       character(len=*),intent(in):: fileN
       character(len=200),intent(in) :: var
-      real,allocatable,intent(out) :: data2(:,:) 
+      real,allocatable,intent(out) :: data2(:,:)
       INTEGER,INTENT(INOUT) :: NC_ID
       integer :: i, Temp_ID, Lat_ID, Lon_ID, NX, NY
 
@@ -9409,13 +9418,13 @@ C----------------------------------------------------------------------
 #ifdef ADCNETCDF
       IF ( read_NWS14_NetCdf_using_core_0 ) THEN
         ! Use core zero to read data
-        ! and then broadcast them 
+        ! and then broadcast them
         IF (MYPROC.EQ.0) THEN
            call Check_err(NF90_INQ_DIMID(NC_ID,Latdim,Temp_ID))
            call Check_err(NF90_INQUIRE_DIMENSION(NC_ID,Temp_ID,len=NY))
            call Check_err(NF90_INQ_DIMID(NC_ID,Londim,Temp_ID))
            call Check_err(NF90_INQUIRE_DIMENSION(NC_ID,Temp_ID,len=NX))
-        ENDIF        
+        ENDIF
         CALL BcastToLocal_Int(NX)
         CALL BcastToLocal_Int(NY)
         allocate(data2(NX,NY))
@@ -9425,9 +9434,9 @@ C----------------------------------------------------------------------
      &                  start=[1, 1, NT],count=[NX, NY, 1]))
         ENDIF
         CALL BCastToLocal_2DRealArray(Data2,NX,NY)
-      ELSE 
+      ELSE
         ! Each core read data
-        call Check_err(NF90_OPEN(fileN,nf90_nowrite,NC_ID)) 
+        call Check_err(NF90_OPEN(fileN,nf90_nowrite,NC_ID))
         call Check_err(NF90_INQ_DIMID(NC_ID,Latdim,Temp_ID))
         call Check_err(NF90_INQUIRE_DIMENSION(NC_ID,Temp_ID,len=NY))
         call Check_err(NF90_INQ_DIMID(NC_ID,Londim,Temp_ID))
@@ -9450,8 +9459,8 @@ C----------------------------------------------------------------------
 C----------------------------------------------------------------------
       SUBROUTINE READNWS14LatLon(fileN,lat,lon,invN,var,ncid)
 C----------------------------------------------------------------------
-C     CPB 10/2023: Added to make NWS = 14 more more readable. Simply 
-C     calls the appropriate subroutine based on the filetype we are 
+C     CPB 10/2023: Added to make NWS = 14 more more readable. Simply
+C     calls the appropriate subroutine based on the filetype we are
 C     using.
 C----------------------------------------------------------------------
       implicit none
@@ -9479,7 +9488,7 @@ C----------------------------------------------------------------------
 #ifdef GRIB2API
       use wgrib2api
 #endif
-      USE GL2LOC_MAPPING ,ONLY : BcastToLocal_2DRealArray, 
+      USE GL2LOC_MAPPING ,ONLY : BcastToLocal_2DRealArray,
      &                           BcastToLocal_Int
       USE SIZES, ONLY : MYPROC
       implicit none
@@ -9494,7 +9503,7 @@ C----------------------------------------------------------------------
       ! read in on core 0
       IF (MYPROC.EQ.0) THEN
          iret = -1; iter = 0
-         do while (iret.le.0.and.iter < 10) 
+         do while (iret.le.0.and.iter < 10)
             if (iter > 0) then
                call logMessage(WARNING,'Trying to read again '//var)
                call sleep(5)
@@ -9541,7 +9550,7 @@ C----------------------------------------------------------------------
       use netcdf
       use netcdf_error, only: check_err
 #endif
-      USE GL2LOC_MAPPING ,ONLY : BcastToLocal_2DRealArray, 
+      USE GL2LOC_MAPPING ,ONLY : BcastToLocal_2DRealArray,
      &                           BcastToLocal_Int
       USE SIZES, ONLY : MYPROC
       implicit none
@@ -9552,11 +9561,11 @@ C----------------------------------------------------------------------
       CALL setMessageSource("READNWS14LatLon_netCDF")
 #ifdef ADCNETCDF
       IF (MYPROC.EQ.0) THEN
-              
+
          IF ( .NOT. read_NWS14_NetCdf_using_core_0 ) THEN
-           call Check_err(NF90_OPEN(FileN,nf90_nowrite,ncid))  
-         END IF      
-                
+           call Check_err(NF90_OPEN(FileN,nf90_nowrite,ncid))
+         END IF
+
          call Check_err(NF90_INQ_DIMID(ncid,Latdim,Temp_ID))
          call Check_err(NF90_INQUIRE_DIMENSION(ncid,Temp_ID,
      &                                         len=NY))
@@ -9587,8 +9596,8 @@ C----------------------------------------------------------------------
             enddo
          endif
 
-         IF ( .NOT. read_NWS14_NetCdf_using_core_0 ) THEN 
-           call Check_err(NF90_CLOSE(ncid))  
+         IF ( .NOT. read_NWS14_NetCdf_using_core_0 ) THEN
+           call Check_err(NF90_CLOSE(ncid))
          END IF
 
       ENDIF
@@ -9623,7 +9632,7 @@ C----------------------------------------------------------------------
       integer :: iret, iter
       INTEGER,INTENT(INOUT) :: NC_ID
       character(len=200),intent(in) :: fileN
-      character(len=19),allocatable :: TimeStr(:) 
+      character(len=19),allocatable :: TimeStr(:)
       character(len=200) :: str_date
       integer :: i, Temp_ID, TL
       ! CPB 4/20/2023
@@ -9635,8 +9644,8 @@ C----------------------------------------------------------------------
 #endif
 
          IF ( .NOT. read_NWS14_NetCdf_using_core_0 ) THEN
-            call Check_err(NF90_OPEN(FileN,nf90_nowrite,NC_ID))  
-         END IF     
+            call Check_err(NF90_OPEN(FileN,nf90_nowrite,NC_ID))
+         END IF
 
          call Check_err(NF90_INQ_DIMID(NC_ID,Tdim,Temp_ID))
          call Check_err(NF90_INQUIRE_DIMENSION(NC_ID,Temp_ID,
@@ -9651,7 +9660,7 @@ C----------------------------------------------------------------------
             call Check_err(NF90_INQ_VARID(NC_ID,Tvar,Temp_ID))
             call Check_err(NF90_GET_VAR(NC_ID,Temp_ID,TimeStr))
             ! Determine the first timestep index
-            str_date = CurDT%strftime(trim(Tformat)) 
+            str_date = CurDT%strftime(trim(Tformat))
             do NT = 1,TL
                if (trim(str_date).eq.TimeStr(NT)) exit
             enddo
@@ -9684,12 +9693,12 @@ C----------------------------------------------------------------------
      &                      'Neither a datetime variable nor a '
      &          //'reference date were provided. Assume met forcing '
      &          //'starts at the beginning of the netCDF file.')
-            NT = 1 
+            NT = 1
          endif
          NTC = NT
 
          IF ( .NOT. read_NWS14_NetCdf_using_core_0 ) THEN
-            call Check_err(NF90_CLOSE(NC_ID))  
+            call Check_err(NF90_CLOSE(NC_ID))
          END IF
 
 #ifdef CMPI
@@ -9716,7 +9725,7 @@ C
       if (iret.eq.0) then
          call allMessage(ERROR,'Cound not find message when reading '
      &                         //trim(var)//' in '//trim(fileN)//'.')
-      elseif (iret.lt.0) then 
+      elseif (iret.lt.0) then
          call allMessage(ERROR,'Fatal error when reading '
      &                         //trim(var)//' in '//trim(fileN)//'.')
       elseif (iret.gt.1) then
@@ -9734,11 +9743,11 @@ C-----------------------------------------------------------------------
 C.....END WJP (NWS = 14) ..............................................
 #endif
 
-C--------------------------------------------------------------------- 
+C---------------------------------------------------------------------
       SUBROUTINE CLOSE_MET_FILES()
         use global, only: NWS, NCICE
         USE SIZES, ONLY : MYPROC
-    
+
 #ifdef ADCNETCDF
         use netcdf
         use netcdf_error, only: check_err
@@ -9746,11 +9755,11 @@ C---------------------------------------------------------------------
 
         IMPLICIT NONE
 
-#ifdef DATETIME        
+#ifdef DATETIME
 #ifdef ADCNETCDF
         IF ( NWS == 14 ) THEN
-          IF ( (.not. grb2flag) .AND. read_NWS14_NetCdf_using_core_0 )  THEN   
-             IF ( MYPROC == 0 ) THEN     
+          IF ( (.not. grb2flag) .AND. read_NWS14_NetCdf_using_core_0 )  THEN
+             IF ( MYPROC == 0 ) THEN
                call Check_err(NF90_CLOSE(PfileNCID))
                call Check_err(NF90_CLOSE(WfileNCID))
                call Check_err(NF90_CLOSE(Wfile1NCID))
@@ -9759,19 +9768,19 @@ C---------------------------------------------------------------------
                   call Check_err(NF90_CLOSE(CfileNCID))
                ENDIF
              ENDIF
-          END IF 
+          END IF
         END IF
 #endif
-#endif        
+#endif
 
         RETURN ;
-      END SUBROUTINE CLOSE_MET_FILES        
+      END SUBROUTINE CLOSE_MET_FILES
 C---------------------------------------------------------------------
 
 
 
 C-----------------------------------------------------------------------
-C     S U B R O U T I N E   W I N D L I M I T E R 
+C     S U B R O U T I N E   W I N D L I M I T E R
 C-----------------------------------------------------------------------
 
 C.... DMW 202207 tail off wind forcing in very shallow water using a tanh,
@@ -9779,12 +9788,12 @@ C.... as a function of water column height.
 
       subroutine windLimiter(H,fwind)
       use global, only : h0
-      
+
       IMPLICIT NONE
-      
+
       REAL(8), intent(in) :: H
       REAL(8), intent(out) :: fwind
-      
+
       call setMessageSource("windLimiter")
 #ifdef ALL_TRACE
       call allMessage(DEBUG,"Enter.")
