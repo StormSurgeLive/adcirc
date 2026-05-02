@@ -30,7 +30,6 @@ ifeq ($(compiler),gfortran)
    ifeq ($(DEBUG),compiler-warnings)
       FFLAGS1	:=  $(DEBUG_FLAGS) -Wall -Wextra -Werror -Wall -Wextra -Wconversion -pedantic -fimplicit-none -Wuninitialized -Wsurprising -Wuse-without-only -Wimplicit-procedure -Winteger-division -Wconversion-extra -DALL_TRACE -DFLUSH_MESSAGES -DFULL_STACK
    endif
-
    ifeq ($(DEBUG),full-not-fpe)
       FFLAGS1	:=  $(subst "-ffpe-trap=zero,invalid,overflow,denormal",,$(DEBUG_FULL))
    endif
@@ -64,6 +63,7 @@ ifneq (,$(filter intel intel-oneapi,$(compiler)))
          PFC  := mpiifort
       else
          $(error Neither mpiifx nor mpiifort was found in PATH.)
+      endif
    endif
    COMMON_FLAGS  := $(INCDIRS) -traceback -assume byterecl -132 -assume buffered_io
    DEBUG_FLAGS   := $(COMMON_FLAGS) -g -O0
@@ -147,16 +147,30 @@ else
    $(info NetCDF was not found and will not be used.)
 endif
 #
-# detect datetime
-ifneq ($(wildcard $(DATETIMEHOME)),)
+# build datetime manually:
+# cd ../thirdparty/datetime_fortran
+# autoreconf -i   # generate configure script
+# ./configure     # execute configure script
+# make check      # build and test datetime library
+#
+# detect/link datetime:
+DATETIMEHOME    := ../thirdparty/datetime_fortran/src
+HAS_DATETIME    := $(wildcard $(DATETIMEHOME)/libdatetime.a)
+ifneq ($(HAS_DATETIME),)
    $(info A Fortran date/time library was found in '$(DATETIMEHOME)' and will be used.)
-   FLIBS         += -ldatetime -L$(DATETIMEHOME)lib/
+   FLIBS         += -ldatetime -L$(DATETIMEHOME)/lib
    DATETIME      := enable
 else
    $(info The Fortran date/time library was not found and will not be used.)
 endif
-# detect grib2
-ifneq ($(wildcard $(WGRIB2HOME)),)
+#
+# build wgrib2 manually:
+# cd ../thirdparty/wgrib2
+#
+# detect/link grib2
+WGRIB2HOME      := ../thirdparty/wgrib2/install
+HAS_WGRIB2      := $(wildcard $(WGRIB2HOME)/wgrib2)
+ifneq ($(HAS_WGRIB2),)
    $(info The grib2 library was found in '$(WGRIB2HOME)' and will be used.)
    FLIBS         += -lwgrib2_api -lwgrib2 -ljasper -L$(WGRIB2HOME)
    GRIB2         := enable
