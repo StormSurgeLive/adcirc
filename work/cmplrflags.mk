@@ -30,44 +30,68 @@ ifeq ($(compiler),gfortran)
    ifeq ($(DEBUG),compiler-warnings)
       FFLAGS1	:=  $(DEBUG_FLAGS) -Wall -Wextra -Werror -Wall -Wextra -Wconversion -pedantic -fimplicit-none -Wuninitialized -Wsurprising -Wuse-without-only -Wimplicit-procedure -Winteger-division -Wconversion-extra -DALL_TRACE -DFLUSH_MESSAGES -DFULL_STACK
    endif
-   ifeq ($(DEBUG),full-not-warnelev)
-      FFLAGS1	:=  $(subst -DDEBUG_WARN_ELEV,,$(DEBUG_FULL))
-   endif
+
    ifeq ($(DEBUG),full-not-fpe)
       FFLAGS1	:=  $(subst "-ffpe-trap=zero,invalid,overflow,denormal",,$(DEBUG_FULL))
    endif
-   ifeq ($(DEBUG),trace)
-      FFLAGS1	:=  $(DEBUG_FLAGS) -DALL_TRACE -DFLUSH_MESSAGES -DFULL_STACK
-   endif
+   # Brett Estrade: Check GCC version for -fallow-argument-mismatch flag (needed for GCC >= 10.1)
+   GCC_VER_MAJOR := $(shell $(FC) -dumpversion | cut -f1 -d.)
+   GCC_VER_MINOR := $(shell $(FC) -dumpversion | cut -f2 -d.)
 
- endif
+   ifeq ($(shell test $(GCC_VER_MAJOR) -gt 10 || (test $(GCC_VER_MAJOR) -eq 10 && test $(GCC_VER_MINOR) -ge 1) && echo 1), 1)
+      $(info GCC $(GCC_VER_MAJOR).$(GCC_VER_MINOR) detected - adding -fallow-argument-mismatch flag)
+      FFLAGS2 += -fallow-argument-mismatch
+      FFLAGS3 += -fallow-argument-mismatch
+   endif
+endif
 #
-ifeq ($(compiler),intel)
-  PPFC          :=  ifort
-  FC            :=  ifort
-  PFC           :=  mpif90
-  COMMON_FLAGS  := $(INCDIRS) -traceback -assume byterecl -132 -assume buffered_io
-  DEBUG_FLAGS   := $(COMMON_FLAGS) -g -O0
-  DEBUG_FULL    := $(DEBUG_FLAGS) -debug all -check all -ftrapuv -fpe0 -DALL_TRACE -DFULL_STACK -DFLUSH_MESSAGES
-  FFLAGS1       := $(COMMON_FLAGS) -O2
-  CFLAGS        := $(INCDIRS) -O2 -m64 -mcmodel=medium -DLINUX
-  CC            := icc
-  CCBE		    := $(CC)
-  ifeq ($(DEBUG),full)
-     CFLAGS     := $(INCDIRS) -g -O0 -m64 -mcmodel=medium -DLINUX
-     FFLAGS1    :=  $(DEBUG_FULL)
-  endif
-  ifeq ($(DEBUG),full-not-fpe)
-     FFLAGS1       :=  $(subst "-ftrapuv -fpe0",,$(DEBUG_FULL))
-  endif
-  ifeq ($(DEBUG),buserror)
-     FFLAGS1       :=  $(DEBUG_FLAGS) -DALL_TRACE -DFULL_STACK -DFLUSH_MESSAGES -check bounds
-  endif
-  #
-  #@jasonfleming Added to fix bus error on hatteras@renci
-  ifeq ($(HEAP_ARRAYS),fix)
-     FFLAGS1 := $(FFLAGS1) -heap-arrays unlimited
-  endif
+# differentiate between intel and intel-oneapi and keep
+# them consistent
+ifneq (,$(filter intel intel-oneapi,$(compiler)))
+   CC   := icc
+   PPFC := ifort
+   FC   := ifort
+   PFC  := mpiifort
+   ifeq ($(filter intel-oneapi,$(compiler)),$(compiler))
+      CC := icx
+      ifeq ($(shell command -v mpiifx >/dev/null 2>&1 && echo yes),yes)
+         PPFC := ifx
+         FC   := ifx
+         PFC  := mpiifx
+      else ifeq ($(shell command -v mpiifort >/dev/null 2>&1 && echo yes),yes)
+         PPFC := ifort
+         FC   := ifort
+         PFC  := mpiifort
+      else
+         $(error Neither mpiifx nor mpiifort was found in PATH.)
+   endif
+   COMMON_FLAGS  := $(INCDIRS) -traceback -assume byterecl -132 -assume buffered_io
+   DEBUG_FLAGS   := $(COMMON_FLAGS) -g -O0
+   DEBUG_FULL    := $(DEBUG_FLAGS) -debug all -check all -ftrapuv -fpe0 -DALL_TRACE -DFULL_STACK -DFLUSH_MESSAGES
+   FFLAGS1       := $(COMMON_FLAGS) -O2
+   CFLAGS        := $(INCDIRS) -O2 -m64 -mcmodel=medium -DLINUX
+   CC            := icc
+   CCBE		    := $(CC)
+   ifeq ($(DEBUG),full)
+      CFLAGS     := $(INCDIRS) -g -O0 -m64 -mcmodel=medium -DLINUX
+      FFLAGS1    :=  $(DEBUG_FULL)
+   endif
+   ifeq ($(DEBUG),full-not-fpe)
+      FFLAGS1       :=  $(subst "-ftrapuv -fpe0",,$(DEBUG_FULL))
+   endif
+   ifeq ($(DEBUG),buserror)
+      FFLAGS1       :=  $(DEBUG_FLAGS) -DALL_TRACE -DFULL_STACK -DFLUSH_MESSAGES -check bounds
+   endif
+   #
+   #@jasonfleming Added to fix bus error on hatteras@renci
+   ifeq ($(HEAP_ARRAYS),fix)
+      FFLAGS1 := $(FFLAGS1) -heap-arrays unlimited
+   endif
+endif
+#
+# finish setting up debug settings that are not compiler specific
+ifeq ($(DEBUG),full-not-warnelev)
+   FFLAGS1	:=  $(subst -DDEBUG_WARN_ELEV,,$(DEBUG_FULL))
 endif
 ifeq ($(DEBUG),trace)
    FFLAGS1       :=  $(DEBUG_FLAGS) -DALL_TRACE -DFULL_STACK -DFLUSH_MESSAGES
