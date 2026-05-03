@@ -1,3 +1,6 @@
+#
+#    U N I V E R S A L   F L A G S
+#
 # SRCDIR is set in makefile or on the compile line
 INCDIRS := -I. -I$(SRCDIR)/prep
 FLIBS   :=
@@ -8,7 +11,8 @@ DPRE    :=  -DLINUX
 CLIBS	  :=
 MSGLIBS :=
 #
-# compiler flags for gfortran and gcc
+#          G  F O R T R A N
+#
 ifeq ($(compiler),gfortran)
    PPFC     :=  gfortran
    FC       :=  gfortran
@@ -44,8 +48,8 @@ ifeq ($(compiler),gfortran)
    endif
 endif
 #
-# differentiate between intel and intel-oneapi and keep
-# them consistent
+#   I N T E L   A N D   I N T E L - O N E A P I
+#
 ifneq (,$(filter intel intel-oneapi,$(compiler)))
    CC   := icc
    PPFC := ifort
@@ -83,9 +87,15 @@ ifneq (,$(filter intel intel-oneapi,$(compiler)))
       FFLAGS1       :=  $(DEBUG_FLAGS) -DALL_TRACE -DFULL_STACK -DFLUSH_MESSAGES -check bounds
    endif
    #
-   #@jasonfleming Added to fix bus error on hatteras@renci
-   ifeq ($(HEAP_ARRAYS),fix)
-      FFLAGS1 := $(FFLAGS1) -heap-arrays unlimited
+   #ZC - Adding this as a warning to users to compile with the implicit array heap allocation options enabled
+   ifeq ($(FC),ifort)
+      ifneq ($(shell ulimit -s),unlimited)
+         $(warning (WARNING) Intel compiler has been specified. The flag "--heap-arrays $(shell ulimit -s)" should be set)
+         $(warning (WARNING) in both ADCIRC cmplrflags.mk FFLAGS1 and when compiling the netcdf-fortran library)
+         $(warning (WARNING) using FCFLAGS to avoid potential issues with stack allocation of large implicit arrays.)
+         #@jasonfleming Added to fix bus error on hatteras@renci
+         FFLAGS1 := $(FFLAGS1) -heap-arrays $(shell ulimit -s)
+      endif
    endif
 endif
 #
@@ -99,10 +109,9 @@ endif
 ifeq ($(DEBUG),netcdf_trace)
    FFLAGS1       :=  $(DEBUG_FLAGS) -DNETCDF_TRACE -DFULL_STACK -DFLUSH_MESSAGES
 endif
-FFLAGS2 :=  $(FFLAGS1)
-FFLAGS3 :=  $(FFLAGS1)
 #
-# Compiler Flags for CircleCI Build Server
+#      C I R C L E   C I
+#
 ifeq ($(compiler),circleci)
    PPFC     :=  ifx
    FC       :=  ifx
@@ -122,7 +131,8 @@ ifeq ($(compiler),circleci)
    MSGLIBS	:=
 endif
 #
-# detect netcdf
+#       N E T C D F
+#
 HAS_NETCDF      := $(shell nf-config --prefix 2>/dev/null)
 ifneq ($(HAS_NETCDF),)
    $(info NetCDF was found in '$(HAS_NETCDF)' and will be used.)
@@ -136,10 +146,6 @@ ifneq ($(HAS_NETCDF),)
    ifeq ($(shell nc-config --has-zstd 2>/dev/null),yes)
       NETCDF4_COMPRESSION=enable
    endif
-   FFLAGS1 += $(NETCDF_FLAGS)
-   FFLAGS2 += $(NETCDF_FLAGS)
-   FFLAGS3 += $(NETCDF_FLAGS)
-   FLIBS   += $(NETCDF_LIBS)
    ifeq ($(WDALTVAL),enable)
       DP   += -DWDVAL_NETCDF
    endif
@@ -147,37 +153,57 @@ else
    $(info NetCDF was not found and will not be used.)
 endif
 #
+#      D A T E T I M E
+#
 # build datetime manually:
 # cd ../thirdparty/datetime_fortran
 # autoreconf -i   # generate configure script
 # ./configure     # execute configure script
 # make check      # build and test datetime library
 #
+# DATETIMEHOME set on the command line supersedes the value
+# specified here
 # detect/link datetime:
 DATETIMEHOME    := ../thirdparty/datetime_fortran/src
-HAS_DATETIME    := $(wildcard $(DATETIMEHOME)/libdatetime.a)
+HAS_DATETIME    := $(wildcard $(DATETIMEHOME)/lib/libdatetime.a)
 ifneq ($(HAS_DATETIME),)
    $(info A Fortran date/time library was found in '$(DATETIMEHOME)' and will be used.)
-   FLIBS         += -ldatetime -L$(DATETIMEHOME)/lib
+   FFLAGS1       += -I$(DATETIMEHOME)/lib
+   FLIBS         += -L$(DATETIMEHOME)/lib -ldatetime
    DATETIME      := enable
 else
    $(info The Fortran date/time library was not found and will not be used.)
 endif
 #
+#        W G R I B 2
+#
 # build wgrib2 manually:
 # cd ../thirdparty/wgrib2
 #
+# If using wgrib2 from ASGS, need to also "make lib"
+# and copy library and fortran module files to
+# $SCRIPTDIR/opt/include and $SCRIPTDIR/opt/lib
+#
+# WARNING: adcswan and padcswan will not link due to
+# duplicate FFT library sybols in grib2/sp_v2.0.2_d/fftpack.f
+# and thirdpary/swan/fftpack51.f90
+#
+# WGRIB2HOME set on the command line supersedes the value
+# specified here
 # detect/link grib2
 WGRIB2HOME      := ../thirdparty/wgrib2/install
-HAS_WGRIB2      := $(wildcard $(WGRIB2HOME)/wgrib2)
+HAS_WGRIB2      := $(wildcard $(WGRIB2HOME)/lib/libwgrib2_api.a)
 ifneq ($(HAS_WGRIB2),)
    $(info The grib2 library was found in '$(WGRIB2HOME)' and will be used.)
-   FLIBS         += -lwgrib2_api -lwgrib2 -ljasper -L$(WGRIB2HOME)
+   FFLAGS1       += -I$(WGRIB2HOME)/include
+   FLIBS         += -L$(WGRIB2HOME)/lib -lwgrib2_api -lwgrib2 -ljasper -lgomp
    GRIB2         := enable
 else
    $(info The grib2 library was not found and will not be used.)
 endif
-# detect XDMF
+#
+#          X D M F
+#
 ifneq ($(wildcard $(XDMFHOME)),)
    $(info The XDMF library was found in '$(XDMFHOME)' and will be used.)
    FLIBS         += -L${XDMFHOME}/lib64
@@ -185,3 +211,6 @@ ifneq ($(wildcard $(XDMFHOME)),)
 else
    $(info The XDMF library was not found and will not be used.)
 endif
+FFLAGS2 :=  $(FFLAGS1)
+FFLAGS3 :=  $(FFLAGS1)
+FFLAGS4 :=  $(FFLAGS1)

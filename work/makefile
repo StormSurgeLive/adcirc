@@ -52,16 +52,7 @@ $(warning (INFO) The Fortran compiler for adcprep is set to $(PPFC).)
 $(warning (INFO) The serial Fortran compiler is set to $(FC).)
 $(warning (INFO) The parallel Fortran compiler is set to $(PFC).)
 $(warning (INFO) The C compiler is set to $(CC).)
-#ZC - Adding this as a warning to users to compile with the implicit array heap allocation options enabled
-ifeq ($(FC),ifort)
-ifneq ($(shell ulimit -s),unlimited)
-    $(warning (WARNING) Intel compiler has been specified. The flag "--heap-arrays $(shell ulimit -s)" should be set)
-    $(warning (WARNING) in both ADCIRC cmplrflags.mk FFLAGS1 and when compiling the netcdf-fortran library)
-    $(warning (WARNING) using FCFLAGS to avoid potential issues with stack allocation of large implicit arrays.)
-endif
-endif
 
-# Specify NETCDF=enable to gmake on the command line to activate netcdf i/o
 ifeq ($(NETCDF),enable)
 # jgf49.61: Don't add the -DADCNETCDF for the IBM compilers (see cmplrflags.mk)
 ifeq ($(IBM),)
@@ -99,8 +90,6 @@ ifeq ($(XDMF),enable)
      FFLAGS4 := $(FFLAGS4) -DADCXDMF -I$(XDMFHOME)/include -I$(SRCDIR)/src
      $(warning (INFO) XDMF library path is $(XDMFHOME).)
 endif
-
-FFLAGSGSW :=  
 ifeq ($(GRIB2),enable)
      PPFC    := $(PPFC) -DGRIB2API
      PFC     := $(PFC) -DGRIB2API
@@ -108,16 +97,16 @@ ifeq ($(GRIB2),enable)
      FFLAGS2 := $(FFLAGS2) -DGRIB2API
      FFLAGS3 := $(FFLAGS3) -DGRIB2API
      FFLAGS4 := $(FFLAGS4) -DGRIB2API
-     FFLAGSGSW := $(FFLAGSGSW) -I$(WGRIB2HOME)
+     $(warning (INFO) WGRIB2 library path is $(WGRIB2HOME).)
 endif
-ifeq ($(DATETIME),enable) 
+ifeq ($(DATETIME),enable)
      PPFC    := $(PPFC) -DDATETIME
      PFC     := $(PFC) -DDATETIME
      FFLAGS1 := $(FFLAGS1) -DDATETIME
      FFLAGS2 := $(FFLAGS2) -DDATETIME
      FFLAGS3 := $(FFLAGS3) -DDATETIME
      FFLAGS4 := $(FFLAGS4) -DDATETIME
-     FFLAGSGSW := $(FFLAGSGSW) -I$(DATETIMEHOME)include
+     $(warning (INFO) DATETIME library path is $(DATETIMEHOME).)
 endif
 ####################### Target Specific Rules ###################################
 
@@ -125,13 +114,13 @@ endif
 ifeq ($(BUILDTYPE),adcprep)
   CF:= $(PPFC)
   O_DIR:=$(SRCDIR)/work/odir1/
-  FFLAGS:= $(FFLAGS1) $(DPRE) $(IMODS) $(O_DIR) $(FFLAGSGSW)
+  FFLAGS:= $(FFLAGS1) $(DPRE) $(IMODS) $(O_DIR)
   VPATH :=  $(SRCDIR)/prep:$(SRCDIR)/thirdparty/KDTREE2:$(SRCDIR):$(SRCDIR)/src:$(SRCDIR)/wind
   ifeq ($(XDMF),enable)
      FLIBS    :=  -L$(XDMFHOME)/lib -lXdmfCore -lXdmfUtils -lXdmf $(FLIBS)
   endif
   ifeq ($(NETCDF),enable)
-    LIBS  := -Lodir_metis -lmetis -L$(NETCDFHOME)/lib -lnetcdf -lnetcdff $(FLIBS)
+    LIBS  := -Lodir_metis -lmetis $(NETCDF_FLAGS) $(NETCDF_LIBS) $(FLIBS)
   else
     LIBS  := -Lodir_metis -lmetis $(FLIBS)
   endif
@@ -147,7 +136,7 @@ ifeq ($(BUILDTYPE),adcprep_be)
      FLIBS    :=  -L$(XDMFHOME)/lib -lXdmfCore -lXdmfUtils -lXdmf $(FLIBS)
   endif
   ifeq ($(NETCDF),enable)
-    LIBS  := -Lodir_metis -lmetis -L$(NETCDFHOME)/lib -lnetcdf -lnetcdff $(FLIBS)
+    LIBS  := -Lodir_metis -lmetis $(NETCDF_FLAGS) $(NETCDF_LIBS) $(FLIBS)
   else
     LIBS  := -Lodir_metis_be -lmetis_be $(FLIBS)
   endif
@@ -157,13 +146,13 @@ endif
 ifeq ($(BUILDTYPE),adcirc)
   CF:= $(FC)
   O_DIR:=$(SRCDIR)/work/odir3/
-  FFLAGS:= $(FFLAGS2) $(DA) $(IMODS) $(O_DIR) $(FFLAGSGSW)
+  FFLAGS:= $(FFLAGS2) $(DA) $(IMODS) $(O_DIR)
   VPATH:=  $(SRCDIR)/src:$(SRCDIR)/thirdparty/KDTREE2:$(SRCDIR)/wind:$(SRCDIR):$(SRCDIR)/prep
   ifeq ($(XDMF),enable)
      FLIBS    :=  -L$(XDMFHOME)/lib -lXdmfCore -lXdmfUtils -lXdmf $(FLIBS)
   endif
   ifeq ($(NETCDF),enable)
-    LIBS  := -L$(NETCDFHOME)/lib -lnetcdf -lnetcdff $(FLIBS)
+    LIBS  := $(NETCDF_FLAGS) $(NETCDF_LIBS) $(FLIBS)
   endif
   #MSG_MOBJ:= $(O_DIR)globalio.o
   MSG_MOBJ:=
@@ -173,13 +162,13 @@ endif
 ifeq ($(BUILDTYPE),adcswan)
   CF:= $(FC)
   O_DIR:=$(SRCDIR)/work/odir33/
-  FFLAGS:= $(FFLAGS2) -DCSWAN $(DA) $(IMODS) $(O_DIR) $(FFLAGSGSW)
+  FFLAGS:= $(FFLAGS2) -DCSWAN $(DA) $(IMODS) $(O_DIR)
   VPATH:=  $(SRCDIR)/src:$(SRCDIR)/thirdparty/KDTREE2:$(SRCDIR)/wind:$(SRCDIR):$(SRCDIR)/prep:$(SRCDIR)/thirdparty/swan
   ifeq ($(XDMF),enable)
      FLIBS    :=  -L$(XDMFHOME)/lib -lXdmfCore -lXdmfUtils -lXdmf $(FLIBS)
   endif
   ifeq ($(NETCDF),enable)
-    LIBS  := -L$(NETCDFHOME)/lib -lnetcdf -lnetcdff $(FLIBS)
+    LIBS  := $(NETCDF_FLAGS) $(NETCDF_LIBS) $(FLIBS)
   endif
   MSG_MOBJ:= $(O_DIR)globalio.o
   ifneq ($(wildcard $(SRCDIR)/work/.swanlastcompile),)
@@ -196,13 +185,13 @@ endif
 ifeq ($(BUILDTYPE),$(PARALLEL_ADCIRC))
   CF:= $(PFC)
   O_DIR:=$(SRCDIR)/work/odir4/
-  FFLAGS:= $(FFLAGS3) $(DP) $(IMODS) $(O_DIR) $(FFLAGSGSW)
+  FFLAGS:= $(FFLAGS3) $(DP) $(IMODS) $(O_DIR)
   VPATH :=  $(SRCDIR)/src:$(SRCDIR)/thirdparty/KDTREE2:$(SRCDIR)/wind:$(SRCDIR):$(SRCDIR)/prep
   ifeq ($(XDMF),enable)
      FLIBS    :=  -L$(XDMFHOME)/lib -lXdmfCore -lXdmfUtils -lXdmf $(FLIBS)
   endif
   ifeq ($(NETCDF),enable)
-    LIBS  := -L$(NETCDFHOME)/lib -lnetcdf -lnetcdff $(FLIBS)
+    LIBS  := $(NETCDF_FLAGS) $(NETCDF_LIBS) $(FLIBS)
   endif
   #MSG_MOBJ:= $(O_DIR)messenger.o $(O_DIR)writer.o
   MSG_MOBJ:= $(O_DIR)messenger.o
@@ -212,16 +201,16 @@ endif
 ifeq ($(BUILDTYPE),padcswan)
   CF:= $(PFC)
   O_DIR:=$(SRCDIR)/work/odir44/
-  FFLAGS:= $(FFLAGS3) -DCSWAN $(DP) $(IMODS) $(O_DIR) $(FFLAGSGSW)
+  FFLAGS:= $(FFLAGS3) -DCSWAN $(DP) $(IMODS) $(O_DIR)
   VPATH :=  $(SRCDIR)/src:$(SRCDIR)/thirdparty/KDTREE2:$(SRCDIR)/wind:$(SRCDIR):$(SRCDIR)/prep:$(SRCDIR)/thirdparty/swan
   ifeq ($(XDMF),enable)
      FLIBS    :=  -L$(XDMFHOME)/lib -lXdmfCore -lXdmfUtils -lXdmf $(FLIBS)
   endif
   ifeq ($(NETCDF),enable)
-    LIBS  := -L$(NETCDFHOME)/lib -lnetcdf -lnetcdff $(FLIBS)
+    LIBS  := $(NETCDF_FLAGS) $(NETCDF_LIBS) $(FLIBS)
   endif
   #MSG_MOBJ:= $(O_DIR)messenger.o $(O_DIR)writer.o
-  MSG_MOBJ:=  
+  MSG_MOBJ:=
   ifneq ($(wildcard $(SRCDIR)/work/.swanlastcompile),)
     include $(SRCDIR)/work/.swanlastcompile
     ifneq ($(SWANLASTCOMPILE),parallel)
@@ -242,7 +231,7 @@ ifeq ($(BUILDTYPE),$(LIBADC))
      FLIBS    :=  -L$(XDMFHOME)/lib -lXdmfCore -lXdmfUtils -lXdmf $(FLIBS)
   endif
   ifeq ($(NETCDF),enable)
-    LIBS  := -L$(NETCDFHOME)/lib -lnetcdf -lnetcdff $(FLIBS)
+    LIBS  := $(NETCDF_FLAGS) $(NETCDF_LIBS) $(FLIBS)
   endif
   MSG_MOBJ:= $(O_DIR)messenger.o
 endif
@@ -308,7 +297,7 @@ ifeq ($(BUILDTYPE),hstime)
   O_DIR:=$(SRCDIR)/work/odir12/
   FFLAGS:= $(FFLAGS2) $(IMODS) $(O_DIR) $(DA)
   ifeq ($(NETCDF),enable)
-    LIBS  := -L$(NETCDFHOME)/lib -lnetcdf -lnetcdff $(FLIBS)
+    LIBS  := $(NETCDF_FLAGS) $(NETCDF_LIBS) $(FLIBS)
   endif
   VPATH :=  $(SRCDIR)/util
   MSG_MOBJ:=
@@ -330,7 +319,7 @@ ifeq ($(BUILDTYPE),aswip)
      FLIBS    :=  -L$(XDMFHOME)/lib -lXdmfCore -lXdmfUtils -lXdmf $(FLIBS)
   endif
   ifeq ($(NETCDF),enable)
-    LIBS  := -L$(NETCDFHOME)/lib -lnetcdf -lnetcdff $(FLIBS)
+    LIBS  := $(NETCDF_FLAGS) $(NETCDF_LIBS) $(FLIBS)
   endif
   MSG_MOBJ:= $(O_DIR)globalio.o
 endif
@@ -383,7 +372,7 @@ NC_MSRC    =  netcdfio.F90
 NCE_MSRC   =  netcdf_error.F90
 GIO_MSRC   =  globalio.F
 WRIT_MSRC  =  write_output.F
-WRITER_MSRC = writer.F 
+WRITER_MSRC = writer.F
 NWS08_MSRC = nws08.F90
 #Casey 090302: Add file for coupling to unstructured SWAN.
 COUP_MSRC  =  couple2swan.F
@@ -396,7 +385,7 @@ SPG_MSRC = quadrature.F90 sponge_layer.F90
 BC3D_MSRC = couple2baroclinic3D.F
 # CPB baroclinic internal tide updates
 GL2LOC_MSRC = gl2loc_mapping.F90
-TIDE_MSRC = astronomic.F90 sun.F90 moon.F90 sun_moon_system.F90 ephemerides.F90 tidalpotential.F90 
+TIDE_MSRC = astronomic.F90 sun.F90 moon.F90 sun_moon_system.F90 ephemerides.F90 tidalpotential.F90
 ITTIDE_MSRC = internaltide.F90
 
 HASH_MOBJ:= $(patsubst %.F90, $(O_DIR)%.o, $(HASH_MSRC) )
@@ -447,9 +436,9 @@ NCE_MOBJ := $(patsubst %.F90, $(O_DIR)%.o, $(NCE_MSRC) )
 ############################# Source & Object Files ######################
 
 METIS_SRC  =  metis.F
-PREP_SRC   =  adcprep.F decomp.F prep_weir.F read_global.F prep.F interp.F 
+PREP_SRC   =  adcprep.F decomp.F prep_weir.F read_global.F prep.F interp.F
 ADC_SRC    =  adcirc.F weir_boundary.F90 wetdry.F read_input.F normal_flow_boundary.F90 cstart.F hstart.F gwce.F momentum.F vew1d.F timestep.F vsmy.F transport.F
-POST_SRC   =  adcpost.F post.F compare.F diffmerge.F 
+POST_SRC   =  adcpost.F post.F compare.F diffmerge.F
 P15_SRC    =  p15.F
 OWI_SRC    =  owi22.F
 B13_SRC    =  build13.F
@@ -860,7 +849,7 @@ $(O_DIR)write_output.o : $(WRITE_OUTPUT_DEP)
 $(O_DIR)xdmfio.o      : xdmfio.F $(O_DIR)mesh.o $(O_DIR)global.o $(O_DIR)boundaries.o $(O_DIR)control.o
 $(O_DIR)hashtable.o   : hashtable.F90
 $(O_DIR)control.o     : control.F
-$(O_DIR)subdomain.o   : subdomain.F $(O_DIR)mesh.o 
+$(O_DIR)subdomain.o   : subdomain.F $(O_DIR)mesh.o
 $(O_DIR)global_3dvs.o : global_3dvs.F $(O_DIR)global.o $(O_DIR)boundaries.o
 # DW
 $(O_DIR)sponge_layer.o : sponge_layer.F90 $(O_DIR)quadrature.o $(ADC_MOBJ)
@@ -1017,6 +1006,8 @@ ifneq ($(BUILDTYPE),)
    $(shell echo 'compiler := $(compiler)' >> $(FLAGSFILE))
    $(shell echo 'MACHINENAME := $(MACHINENAME)' >> $(FLAGSFILE))
    $(shell echo 'NETCDF := $(NETCDF)' >> $(FLAGSFILE))
+   $(shell echo 'NETCDF_FLAGS := $(NETCDF_FLAGS)' >> $(FLAGSFILE))
+   $(shell echo 'NETCDF_LIBS := $(NETCDF_LIBS)' >> $(FLAGSFILE))
    $(shell echo 'NETCDFHOME := $(NETCDF)' >> $(FLAGSFILE))
    $(shell echo 'NETCDF4 := $(NETCDF4)' >> $(FLAGSFILE))
    $(shell echo 'NETCDF4_COMPRESSION := $(NETCDF4_COMPRESSION)' >> $(FLAGSFILE))
