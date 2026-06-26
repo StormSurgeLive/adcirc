@@ -1,0 +1,59 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+title: "ADCIRC: The Advanced Circulation model"
+abstract: >-
+  ADCIRC is a system of computer programs for solving time-dependent, free
+  surface circulation and transport problems in two and three dimensions. These
+  programs use the finite element method in space, allowing the use of highly
+  flexible, unstructured grids. Typical applications include the prediction of
+  storm surge and flooding, modeling of tides and wind-driven circulation,
+  larval transport studies, near-shore marine operations, and dredging
+  feasibility and material disposal studies.
+type: software
+authors:
+  - family-names: Luettich
+    given-names: Rick
+    orcid: "https://orcid.org/0000-0002-7625-1952"
+    affiliation: University of North Carolina at Chapel Hill
+  - family-names: Westerink
+    given-names: Joannes
+    orcid: "https://orcid.org/0000-0003-0602-0494"
+    affiliation: University of Notre Dame
+  - family-names: Cobell
+    given-names: Zachary
+    orcid: "https://orcid.org/0000-0002-6645-8570"
+    affiliation: The Water Institute
+  - family-names: Bunya
+    given-names: Shintaro
+    orcid: "https://orcid.org/0000-0001-5455-8550"
+    affiliation: University of North Carolina at Chapel Hill
+  - family-names: Dawson
+    given-names: Clint
+    orcid: "https://orcid.org/0000-0001-7273-0684"
+    affiliation: The University of Texas at Austin
+  - family-names: Massey
+    given-names: Thomas Chris
+    affiliation: United States Army Corps of Engineers
+  - family-names: Dietrich
+    given-names: Joel Casey
+    affiliation: North Carolina State University
+  - family-names: Kolar
+    given-names: Randall
+    orcid: "https://orcid.org/0009-0005-5248-7900"
+    affiliation: University of Oklahoma
+  - family-names: Blanton
+    given-names: Brian
+    orcid: "https://orcid.org/0000-0002-3162-2799"
+    affiliation: University of North Carolina at Chapel Hill
+repository-code: "https://github.com/adcirc/adcirc"
+url: "https://adcirc.org"
+license: LGPL-3.0-or-later
+keywords:
+  - storm surge
+  - coastal circulation
+  - hydrodynamics
+  - finite element method
+  - unstructured mesh
+  - shallow water equations
+  - ocean modeling
+  - tides
