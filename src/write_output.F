@@ -1931,10 +1931,6 @@ C----------------------------------------------------------------------
          ! if the spool counter for this output type does not match the
          ! output time step increment for this output type, then go to
          ! the next data type
-         write(16,'(A,A,i0,A,i0,A,i0,A)') trim(ptr(i) % descript2D % field_name)," ",
-     &                      ptr(i) % descript2D % spoolCounter," ",
-     &                      ptr(i) % descript2D % startTimeStep," ",
-     &                      ptr(i) % descript2D % endTimeStep," " !jgfdebug
          if (ptr(i) % descript2D % spoolCounter.ne.
      &       ptr(i) % descript2D % outputTimeStepIncrement) then
             cycle
